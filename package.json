@@ -12,5 +12,18 @@
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
     "morgan": "~1.9.1"
-  }
+  },
+  "description": "Testing github",
+  "main": "app.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miltonizer/quakeworld_records_backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/miltonizer/quakeworld_records_backend/issues"
+  },
+  "homepage": "https://github.com/miltonizer/quakeworld_records_backend#readme"
 }
