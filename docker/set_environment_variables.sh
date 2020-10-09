@@ -1,0 +1,4 @@
+#!/bin/bash
+export QUAKEWORLD_RECORDS_POSTGRES_USER=postgres
+export QUAKEWORLD_RECORDS_POSTGRES_PASSWORD=postgres
+export quakeworld_records_backend_jwtPrivateKey=12345678

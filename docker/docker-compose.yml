@@ -1,0 +1,19 @@
+# docker-compose.yml
+version: '3'
+services:
+  postgres:
+    image: postgres:13
+    container_name: quakeworld_records_postgres
+    environment:
+     - POSTGRES_USER=${QUAKEWORLD_RECORDS_POSTGRES_USER}
+     - POSTGRES_PASSWORD=${QUAKEWORLD_RECORDS_POSTGRES_PASSWORD}
+    volumes:
+      - quakeworld_records_data:/var/lib/postgresql/data/ # persist data even if container shuts down
+    ports:
+      - "5432:5432"
+    networks:
+      - quakeworld_records_network
+volumes:
+  quakeworld_records_data: # named volumes can be managed easier using docker-compose
+networks:
+  quakeworld_records_network:
