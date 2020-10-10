@@ -50,8 +50,5 @@ module.exports = function(app) {
         }
     });
 
-    app.use(middleware.handle(i18next, {
-            ignoreRoutes: ['/foo'] // or function(req, res, options, i18next) { /* return true to ignore */ }
-        })
-    );
+    app.use(middleware.handle(i18next);
 }

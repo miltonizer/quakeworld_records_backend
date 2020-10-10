@@ -15,3 +15,12 @@
 `docker-compose -f docker-compose.yml up -d`
 - Run the node backend in the root folder of the project:
 `node index.js`
+
+## Notes about development
+### Internationalization
+- The project uses i18next package for internationalization. There is unfortunately no way to translate texts outside the express pipeline, but within the pipeline translatations are accessed through i18next's t-function:
+`req.t('key')`, 
+where key is a key for the translation found in one of the translation JSON files. 
+- Translation files files are located under locales/{lng}/.
+- i18next configuration is done in startup/internationalization.js file.
+- Language in the software can be changed by query string (lng), header information or with cookies.
