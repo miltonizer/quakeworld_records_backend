@@ -5,13 +5,14 @@ const path = require('path');
 
 module.exports = function(app) {
     i18next.use(middleware.LanguageDetector).use(Backend).init({
-        debug: true,
+        debug: false,
         lng: 'en',
         fallbackLng: 'en',
         supportedLngs: ['en', 'ru'],
         load: 'all',
         preload: ['en', 'ru'],
         defaultNS: 'translation',
+        saveMissing: true,
         detection: {
             // order and from where user language should be detected
             order: [/*'path', 'session', */ 'querystring', 'cookie', 'header'],

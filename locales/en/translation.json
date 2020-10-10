@@ -1,6 +1,7 @@
 {
     "key": "hello!",
-	"hello": "hello",
-	"time": "time",
-	"username": "username"
+    "access_denied": "Access denied.",
+    "access_denied_no_token": "Access denied. No token provided.",
+    "invalid_token": "Invalid token",
+    "internal_server_error": "Something failed terribly."
 }
