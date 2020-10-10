@@ -2,6 +2,5 @@
 [Environment]::SetEnvironmentVariable('QUAKEWORLD_RECORDS_POSTGRES_PASSWORD','postgres',[EnvironmentVariableTarget]::User)
 [Environment]::SetEnvironmentVariable('POSTGRES_QUAKEWORLD_RECORDS_USER','quakeworld_records_user',[EnvironmentVariableTarget]::User)
 [Environment]::SetEnvironmentVariable('POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD','password',[EnvironmentVariableTarget]::User)
-[Environment]::SetEnvironmentVariable('POSTGRES_QUAKEWORLD_RECORDS_DATABASE_NAME','quakeworld_records',[EnvironmentVariableTarget]::User) 
 [Environment]::SetEnvironmentVariable('quakeworld_records_backend_jwtPrivateKey','12345678',[EnvironmentVariableTarget]::User)
 [Environment]::SetEnvironmentVariable('NODE_ENV','development',[EnvironmentVariableTarget]::User)
