@@ -50,5 +50,5 @@ module.exports = function(app) {
         }
     });
 
-    app.use(middleware.handle(i18next);
+    app.use(middleware.handle(i18next));
 }
