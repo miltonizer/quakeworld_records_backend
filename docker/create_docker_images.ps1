@@ -1,0 +1,1 @@
+docker build -t quakeworld_records_postgres_image .
