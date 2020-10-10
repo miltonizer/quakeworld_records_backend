@@ -6,8 +6,7 @@ const config = require('config');
 // else but this is commonly used)
 module.exports = function (req, res, next) {
     const token = req.header('x-auth-token');
-    // TODO: i18n
-    if(!token) return res.status(401).send('Access denied. No token provided');
+    if(!token) return res.status(401).send(req.t('access_denied_no_token'));
 
     try {
         const decoded = jwt.verify(token, config.get('jwtPrivateKey'));
@@ -16,7 +15,6 @@ module.exports = function (req, res, next) {
     }
     catch (err) {
         console.log(err.message);
-        // TODO: i18n
-        res.status(400).send('Invalid token');
+        res.status(400).send(req.t('invalid_token'));
     }
 }

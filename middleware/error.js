@@ -10,7 +10,6 @@ module.exports = function(err, req, res, next) {
     // verbose
     // debug
     // silly
-    // TODO: i18n
     // TODO: configure error levels and learn how logging really works
-    res.status(500).send('Something failed. This message comes from error.js.');
+    res.status(500).send('internal_server_error');
 }

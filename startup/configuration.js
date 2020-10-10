@@ -8,7 +8,6 @@ module.exports = function() {
         // Throw error (will be handled elsewhere by winston).
         // Don't throw string (possible in javascript) because
         // you will lose stacktrace by doing so.
-        // TODO: i18n
         // throw new Error('FATAL ERROR: jwtPrivateKey not set.');
     //}
 }

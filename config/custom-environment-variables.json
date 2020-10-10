@@ -1,3 +1,5 @@
 {
-    "jwtPrivateKey": "quakeworld_records_backend_jwtPrivateKey"
+    "jwtPrivateKey": "quakeworld_records_backend_jwtPrivateKey",
+    "database_user": "POSTGRES_QUAKEWORLD_RECORDS_USER",
+    "database_password": "POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD"
 }

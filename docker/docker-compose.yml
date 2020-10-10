@@ -1,0 +1,21 @@
+version: '3'
+services:
+  postgres:
+    image: quakeworld_records_postgres_image
+    container_name: quakeworld_records_postgres
+    environment:
+     - POSTGRES_USER=${QUAKEWORLD_RECORDS_POSTGRES_USER}
+     - POSTGRES_PASSWORD=${QUAKEWORLD_RECORDS_POSTGRES_PASSWORD}
+     - POSTGRES_QUAKEWORLD_RECORDS_USER=${POSTGRES_QUAKEWORLD_RECORDS_USER}
+     - POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD=${POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD}
+     - POSTGRES_QUAKEWORLD_RECORDS_DATABASE_NAME=${POSTGRES_QUAKEWORLD_RECORDS_DATABASE_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - quakeworld_records_data:/var/lib/postgresql/data/
+    networks:
+      - quakeworld_records_network
+networks:
+  quakeworld_records_network:
+volumes:
+  quakeworld_records_data:
