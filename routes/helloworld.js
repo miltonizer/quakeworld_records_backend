@@ -9,7 +9,8 @@ router.get('/', async (req, res) => {
     const result = await db.query('SELECT NOW() as time', []);
     //console.log(result);
     // ${result.rows[0].time}
-    res.send(`${req.t('key')}`);
+    throw new Error('asdf testiviesti');
+    //res.send(`${req.t('key')}`);
 });
 
 module.exports = router;
