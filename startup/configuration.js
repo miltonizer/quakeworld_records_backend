@@ -10,4 +10,7 @@ module.exports = function() {
         // you will lose stacktrace by doing so.
         // throw new Error('FATAL ERROR: jwtPrivateKey not set.');
     //}
+
+    // TODO: Make checks for other mandatory environment variables as well
+    // At least database stuff
 }
