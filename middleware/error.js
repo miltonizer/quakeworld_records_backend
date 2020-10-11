@@ -5,5 +5,5 @@ const errorHandler = require('../util/error_handler');
 // four parameters instead of three.
 module.exports = async function(err, req, res, next) {
     await errorHandler(err);
-    res.status(500).send('internal_server_error');
+    res.status(500).send(req.t('internal_server_error'));
 }
