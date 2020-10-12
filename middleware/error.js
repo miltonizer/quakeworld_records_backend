@@ -1,4 +1,4 @@
-const errorHandler = require('../util/error_handler');
+const { errorHandler } = require('../util/error_handler');
 
 // This catches only errors in the request processing pipeline (Express).
 // Error handler middlewares in Express are always introduced last and take
