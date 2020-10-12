@@ -1,7 +1,8 @@
 const logger = require('./util/logger');
 const express = require('express');
 const app = express();
-require('./startup/error_handling')();
+const { initializeErrorHandling } = require('./util/error_handler');
+initializeErrorHandling();
 require('./startup/internationalization')(app);
 require('./startup/routes')(app);
 require('./startup/configuration')();

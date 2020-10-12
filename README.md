@@ -26,12 +26,11 @@ where key is a key for the translation found in one of the translation JSON file
 - Language in the software can be changed by query string (lng), header information or with cookies.
 
 ### Error handling and validation
-- index.js calls a function exported by startup/error_handling.js module that sets up global event handlers for uncaught exceptions and unhandled promise rejections.
+- index.js calls a function exported by util/error_handler.js module that sets up global event handlers for uncaught exceptions and unhandled promise rejections.
 - Fatal errors should be always thrown as Errors instead of e.g. strings so that the event handler will catch them.
 - Errors happening in the Express request processing pipeline are handled by the middlware/error.js middleware. Before updating to Express major version 5 or higher an additional node package express-async-errors is needed to automatically "catch" errors in asynchronous route handlers. Without express-async-errors the middleware function next() would have to be called explicitly each time an error occured.
 - Errors are handled by util/error_handler.js module and this module should always be called for error handling purposes.
-
-- JOI
+- Validation is done with JOI package. There's a middleware function in middleware/validation.js that takes a validation function as a parameter and returns a JOI validation error if such an error exists. The validation function that is given as a parameter has to be customized for each request separately.
 
 ### Logging
 - Logging is done by winston and morgan. Morgan handles http/express logging and winston the rest. Even morgan logging is streamed to winston.
