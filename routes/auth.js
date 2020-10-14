@@ -3,13 +3,14 @@ const _ = require('lodash');
 const bcrypt = require('bcrypt');
 const express = require('express');
 const Joi = require('joi');
+const validate = require('../middleware/validate');
 const router = express.Router();
 
 // Authenticating user:
 // User sends his username(email) and password (TODO: how to make sure sent
 // passwords are safe?). User is fetched from the database with the email
 // and passwords are being compared with bcrypt.
-router.post('/', async (req, res) => {
+router.post('/', validate(validateAuthenticationRequest), async (req, res) => {
     try {
         const {error} = validate(req.body);
         if(error) return res.status(400).send(error.details[0].message);
@@ -28,7 +29,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-function validate(req) {
+function validateAuthenticationRequest(req) {
     const schema = Joi.object({ 
         email: Joi.string().min(1).required().email(),
         password: Joi.string().min(8).required(),

@@ -2,7 +2,8 @@ const express = require('express');
 const helmet = require("helmet");
 const morgan = require('morgan');
 const logger = require('../util/logger');
-//const auth = require('../routes/auth');
+const auth = require('../routes/auth');
+const users = require('../routes/users');
 const helloworld = require('../routes/helloworld');
 const error = require('../middleware/error');
 
@@ -10,7 +11,8 @@ module.exports = function(app) {
     app.use(express.json());
     app.use(helmet());
     app.use(morgan("combined", { stream: logger.stream }));
-    //app.use('/api/auth', auth);
+    app.use('/api/auth', auth);
+    app.use('/api/users', users);
     app.use('/api/helloworld', helloworld);
 
     // This error middleware function catches all errors everywhere

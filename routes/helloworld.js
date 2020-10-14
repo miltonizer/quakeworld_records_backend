@@ -1,4 +1,4 @@
-//const auth = require('../middleware/auth');
+const auth = require('../middleware/auth');
 //const admin = require('../middleware/admin');
 const validate = require('../middleware/validate');
 const express = require('express');
@@ -21,6 +21,10 @@ router.get('/languageRequired', validate(validateHelloWorld), async (req, res) =
 router.get('/databaseTest', async (req, res) => {
     const result = await db.query('SELECT NOW() as time', []);
     res.send(`${result.rows[0].time}`);
+});
+
+router.get('/authTest', auth, async (req, res) => {
+    res.send(`${req.t('key')}`);
 });
 
 function validateHelloWorld(req) {
