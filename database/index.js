@@ -19,7 +19,7 @@ const pool = new Pool({
 
 pool.on('error', async (err, client) => {
   await errorHandler(err);
-  process.exit(-1)
+  process.exit(-1);
 })
 
 module.exports = {
