@@ -23,5 +23,5 @@ pool.on('error', async (err, client) => {
 })
 
 module.exports = {
-  query: (text, params) => pool.query(text, params),
+  query: (text, params) => pool.query(text, params)
 }

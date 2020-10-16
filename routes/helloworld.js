@@ -5,6 +5,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const Joi = require('joi');
+const UserService = require( "../services/UserService" );
+const userService = new UserService();
 
 router.get('/', async (req, res) => {
     res.send(`${req.t('key')}`);
@@ -25,6 +27,10 @@ router.get('/databaseTest', async (req, res) => {
 
 router.get('/authTest', auth, async (req, res) => {
     res.send(`${req.t('key')}`);
+});
+
+router.get('/serviceRepositoryTest', async (req, res) => {
+    res.send(userService.userExists({username: "test", email: "test@test.com"}));
 });
 
 function validateHelloWorld(req) {
