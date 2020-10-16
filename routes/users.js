@@ -6,7 +6,7 @@ const config = require('config');
 const bcrypt = require('bcrypt');
 const express = require('express');
 const router = express.Router();
-const UserService = require( "../services/UserService" );
+const UserService = require( "../services/user_service" );
 const userService = new UserService();
 
 router.get('/me', auth, async (req, res) => {

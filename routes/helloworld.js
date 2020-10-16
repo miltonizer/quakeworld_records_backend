@@ -3,10 +3,11 @@ const auth = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const db = require('../database/');
 const Joi = require('joi');
-const UserService = require( "../services/UserService" );
+const UserService = require( "../services/user_service" );
 const userService = new UserService();
+const User = require( "../models/User");
 
 router.get('/', async (req, res) => {
     res.send(`${req.t('key')}`);
@@ -30,7 +31,9 @@ router.get('/authTest', auth, async (req, res) => {
 });
 
 router.get('/serviceRepositoryTest', async (req, res) => {
-    res.send(userService.userExists({username: "test", email: "test@test.com"}));
+    const user = new User(req.query.username, req.query.email);
+    const result = await userService.userExists(user); 
+    res.send(result);
 });
 
 function validateHelloWorld(req) {
