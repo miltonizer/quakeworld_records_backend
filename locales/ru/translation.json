@@ -3,5 +3,7 @@
     "access_denied": "Access denied.",
     "access_denied_no_token": "Access denied. No token provided.",
     "invalid_token": "Invalid token",
-    "internal_server_error": "Something failed terribly."
+    "internal_server_error": "Something failed terribly.",
+	 "user_creation_error": "An unexpected error happened while creating the account.",
+	 "error_user_exists": "The username or email has already been taken."
 }

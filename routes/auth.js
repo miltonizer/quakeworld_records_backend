@@ -4,6 +4,8 @@ const express = require('express');
 const Joi = require('joi');
 const validate = require('../middleware/validate');
 const router = express.Router();
+const UserService = require( "../services/user_service" );
+const userService = new UserService();
 
 // Authenticating user:
 // User sends his username(email) and password (TODO: how to make sure sent
@@ -11,9 +13,7 @@ const router = express.Router();
 // and passwords are being compared with bcrypt.
 router.post('/', validate(validateAuthenticationRequest), async (req, res) => {
     try {
-        const {error} = validate(req.body);
-        if(error) return res.status(400).send(error.details[0].message);
-        
+        let user = userService.authenticateUser(req.body);
         let user = await User.findOne({email: req.body.email});
         if(!user) return res.status(400).send('Invalid email or password.');
 
@@ -24,13 +24,16 @@ router.post('/', validate(validateAuthenticationRequest), async (req, res) => {
         res.send(token);
     }
     catch (err) {
+        // TODO i18n
         res.status(400).send(`Error while authenticating ${err.message}`);
     }
 });
 
+// TODO
+// Move password requirements somewhere as constants?
 function validateAuthenticationRequest(req) {
     const schema = Joi.object({ 
-        email: Joi.string().min(1).required().email(),
+        email: Joi.string().email().required,
         password: Joi.string().min(8).required(),
     });
     return schema.validate(req);

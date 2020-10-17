@@ -1,0 +1,2 @@
+ALTER TABLE public.user DROP CONSTRAINT IF EXISTS user_pkey;
+ALTER TABLE public.user ADD PRIMARY KEY (id);
