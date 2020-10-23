@@ -10,9 +10,9 @@ const router = express.Router();
 const userService = new UserService();
 
 router.get('/me', auth, async (req, res) => {
-    // TODO
-    //const user = await User.findById(req.user._id).select('-password');
-    res.status(200).send(user);
+    const { body, error } = await userService.fetchById(req.user.id);
+    if(error) return res.status(400).send(req.t(error));
+    res.status(200).send(body.user);
 });
 
 // Add a new user
@@ -21,10 +21,10 @@ router.get('/me', auth, async (req, res) => {
 // Logging out should be handled by clients.
 router.post('/', validate(validateUser), async (req, res) => {
     try {
-        logger.info("routes.users.root called");
+        logger.silly("routes.users.root called");
         const { success, body, error } = await userService.createUser(req.body);
         if(error) return res.status(400).send(req.t(error)); 
-        logger.info("routes.users.root about the send response");
+        logger.silly("routes.users.root about the send response");
         res.header('x-auth-token', body.token).send(_.pick(body.user, [
             'username',
             'email',

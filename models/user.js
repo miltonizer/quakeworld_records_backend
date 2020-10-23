@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const config = require('config');
+const logger = require('../util/logger');
 
 class User {
     constructor (username, email, password, admin, superadmin, id) {
