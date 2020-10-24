@@ -16,18 +16,10 @@ const userService = new UserService();
  * @returns HTTP 500 if an unexpected error occurs
  */
 router.post('/', validate(validateAuthenticationRequest), async (req, res) => {
-    try {
-        logger.silly("routes.auth.root called");
-        const { success, body, error } = await userService.authenticateUser(req.body);
-        if(error) return res.status(400).send(req.t(error));
-        logger.silly("routes.auth.root authentication done");
-
-        res.send(body.token);
-    }
-    catch (err) {
-        await errorHandler(err);
-        res.status(500).send(req.t('user_authentication_error'));
-    }
+    logger.silly("routes.auth.root called");
+    const token = await userService.authenticateUser(req.body);
+    logger.silly("routes.auth.root authentication done");
+    res.send(token);
 });
 
 // TODO

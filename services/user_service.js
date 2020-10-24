@@ -3,6 +3,7 @@ const _ = require('lodash');
 const UserRepository = require("../repositories/user_repository");
 const userRepository = new UserRepository();
 const logger = require('../util/logger');
+const ApplicationError = require('../util/errors/application_error');
 const {hashPassword, verifyPassword} = require('../util/password_encryption');
 const User = require( "../models/User");
 
@@ -12,20 +13,18 @@ class UserService {
     /**
      * Create a new user
      * @param  {requestBody} requestBody The validated body of the create user request
-     * @returns {Promise<{success: boolean, error: *}|{success: boolean, body: *}>}
-     * In successful returns the body will contain a user object and a jwt 
-     * token named respectively.
+     * @returns {Promise<{user: User, token: jsonwebtoken}>}
      */
     async createUser(requestBody) {
         // Most errors won't be handled here either because there isn't much
         // the service class can do about them.
-        logger.silly("services.UserService.createUser called");
+        logger.silly(`services.UserService.createUser called with ${JSON.stringify(requestBody)}`);
         let user = new User(requestBody.username, 
             requestBody.email, 
             requestBody.password
         );
         if(await userRepository.fetchUser(user)) {
-            return { success: false, error: "error_user_exists" };
+            throw new ApplicationError("User exists already.", 400, "error_user_exists");
         }
         else {
             // Hashing the password given by the user
@@ -34,20 +33,13 @@ class UserService {
             logger.silly("services.UserService.createUser user password hashed");
 
             // Save user
-            const userFromRepository = await userRepository.saveUser(user);
-            user.id = userFromRepository.id;
-            user.username = userFromRepository.username;
-            user.email = userFromRepository.email;
-            user.admin = userFromRepository.admin;
-            user.superadmin = userFromRepository.superadmin;
+            user = await userRepository.saveUser(user);
+
             const token = await user.generateAuthToken();
             logger.silly("services.UserService.createUser user created");
             return { 
-                success: true, 
-                body: { 
-                    user: user,
-                    token: token
-                }
+                user: user,
+                token: token
             }
         } 
     }
@@ -57,63 +49,42 @@ class UserService {
      * @param  {requestBody} requestBody The validated body of the 
      * authentication request containing properties emailOrUsername 
      * and password
-     * @returns {Promise<{success: boolean, error: *}|{success: boolean, body: *}>}
-     * In successful returns the body will contain jwt token with name "token"
+     * @returns {Promise<jsonwebtoken>}
      */
     async authenticateUser(requestBody) {
         logger.silly("services.UserService.authenticateUser called");
+        const passwordFromUser = requestBody.password;
 
         // Make sure that user exists
-        let user = new User(requestBody.emailOrUsername, 
-            requestBody.emailOrUsername, 
-            requestBody.password
+        let user = await userRepository.fetchUser(
+            new User(requestBody.emailOrUsername, 
+                requestBody.emailOrUsername
+            )
         );
-
-        const userFromRepository = await userRepository.fetchUser(user);
-        if(!userFromRepository) return { success: false, error: "error_user_does_not_exist" };
+        if(!user) {
+            throw new ApplicationError("User does not exist.", 400, "error_user_does_not_exist");
+        }
 
         // Verifying password
-        if(!await verifyPassword(userFromRepository.password, user.password)) {
-            return { success: false, error: "error_invalid_username_or_password" };
+        if(!await verifyPassword(user.password, passwordFromUser)) {
+            throw new ApplicationError("Invalid username or password", 400, "error_invalid_username_or_password");
         }   
 
         // Generating token to be returned
-        user.id = userFromRepository.id;
-        user.username = userFromRepository.username;
-        user.email = userFromRepository.email;
-        user.admin = userFromRepository.admin;
-        user.superadmin = userFromRepository.superadmin;
-        const token = await user.generateAuthToken();
-        return { 
-            success: true, 
-            body: {
-                token: token
-            }
-        }
+        return await user.generateAuthToken();
     }
 
     /**
      * Fetch user's info by id
      * @param id The id of the user that has logged in
-     * @returns {Promise<{success: boolean, error: *}|{success: boolean, body: *}>}
+     * @returns {Promise<{User>}
      * In successful returns the body will contain a valid user object
      */
     async fetchById(userId) {
-        const userFromRepository = await userRepository.fetchById(userId);
-        if(!userFromRepository) return { success: false, error: "error_user_does_not_exist" };
-        const user = new User(
-            userFromRepository.username,
-            userFromRepository.email,
-            '',
-            userFromRepository.admin,
-            userFromRepository.superadmin,
-            userFromRepository.id);
-        return {
-            success: true,
-            body: {
-                user: user
-            }
-        }
+        const user = await userRepository.fetchById(userId);
+        if(!user) return { success: false, error: "error_user_does_not_exist" };
+        user.password = '';
+        return user;
     }
 }
 module.exports = UserService;

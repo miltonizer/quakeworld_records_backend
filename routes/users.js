@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const userService = new UserService();
 
+// A route for getting information about the user that has logged in
 router.get('/me', auth, async (req, res) => {
     const { body, error } = await userService.fetchById(req.user.id);
     if(error) return res.status(400).send(req.t(error));
@@ -20,23 +21,16 @@ router.get('/me', auth, async (req, res) => {
 // don't store them in plain text but hash them first!
 // Logging out should be handled by clients.
 router.post('/', validate(validateUser), async (req, res) => {
-    try {
-        logger.silly("routes.users.root called");
-        const { success, body, error } = await userService.createUser(req.body);
-        if(error) return res.status(400).send(req.t(error)); 
-        logger.silly("routes.users.root about the send response");
-        res.header('x-auth-token', body.token).send(_.pick(body.user, [
-            'username',
-            'email',
-            'admin',
-            'superadmin',
-            'id'
-        ]));
-    }
-    catch (err) {
-        await errorHandler(err);
-        res.status(500).send(req.t('user_creation_error'));
-    }
+    logger.silly("routes.users.root called");
+    const { token, user } = await userService.createUser(req.body);
+    logger.silly("routes.users.root about the send response");
+    res.header('x-auth-token', token).send(_.pick(user, [
+        'username',
+        'email',
+        'admin',
+        'superadmin',
+        'id'
+    ]));
 });
 
 function validateUser(req) {
