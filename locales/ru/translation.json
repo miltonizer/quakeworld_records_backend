@@ -3,5 +3,11 @@
     "access_denied": "Access denied.",
     "access_denied_no_token": "Access denied. No token provided.",
     "invalid_token": "Invalid token",
-    "internal_server_error": "Something failed terribly."
+
+    "error_internal_server_error": "Something failed terribly.",
+    "error_user_exists": "The username or email has already been taken.",
+    "error_invalid_username_or_password": "Invalid username or password",
+    "error_user_does_not_exist": "Invalid username or password",
+    "error_multiple_users_found": "Something failed terribly.",
+    "error_too_many_rows_inserted": "Something failed terribly."
 }

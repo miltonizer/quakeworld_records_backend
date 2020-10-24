@@ -1,0 +1,31 @@
+{
+	"sql-file" : "true",
+	"defaultEnv": {"ENV": "NODE_ENV"},
+	"development": {
+		"driver": "pg",
+		"user": {"ENV": "POSTGRES_QUAKEWORLD_RECORDS_USER"},
+		"password": {"ENV": "POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD"},
+		"host": "localhost",
+		"database": "quakeworld_records",
+		"port": "5432",
+		"schema": "public"
+	},
+	"test": {
+		"driver": "pg",
+		"user": {"ENV": "POSTGRES_QUAKEWORLD_RECORDS_USER"},
+		"password": {"ENV": "POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD"},
+		"host": "localhost",
+		"database": "quakeworld_records_test",
+		"port": "5432",
+		"schema": "public"
+	},
+	"production": {
+		"driver": "pg",
+		"user": {"ENV": "POSTGRES_QUAKEWORLD_RECORDS_USER"},
+		"password": {"ENV": "POSTGRES_QUAKEWORLD_RECORDS_USER_PASSWORD"},
+		"host": "localhost",
+		"database": "quakeworld_records",
+		"port": "5432",
+		"schema": "public"
+	}
+}

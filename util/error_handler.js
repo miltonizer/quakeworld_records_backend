@@ -1,8 +1,20 @@
-const logger = require('../util/logger');
+const logger = require('./logger');
+const DatabaseError = require('../util/errors/database_error');
 require('express-async-errors');
 
 const errorHandler = async (err) => {
-    logger.error(`${err.message}`);
+    let errorMessage;
+    if(err instanceof DatabaseError) {
+        errorMessage = `Message: ${err.message} ` + 
+                        `StackTrace: ${err.stack} ` +
+                        `SQL: ${err.sql} ` +
+                        `SqlParameters: ${err.sqlParameters}`;
+    }
+    else {
+        errorMessage = `Message: ${err.message} ` +
+                        `StackTrace: ${err.stack}`;
+    }
+    logger.error(`${errorMessage}`);
 }
 
 module.exports = {

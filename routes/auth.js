@@ -1,38 +1,38 @@
-const {User} = require('../models/user');
 const _ = require('lodash');
-const bcrypt = require('bcrypt');
 const express = require('express');
 const Joi = require('joi');
+const validate = require('../middleware/validate');
+const logger = require('../util/logger');
+const { errorHandler } = require('../util/error_handler');
 const router = express.Router();
+const UserService = require( "../services/user_service" );
+const userService = new UserService();
 
-// Authenticating user:
-// User sends his username(email) and password (TODO: how to make sure sent
-// passwords are safe?). User is fetched from the database with the email
-// and passwords are being compared with bcrypt.
-router.post('/', async (req, res) => {
-    try {
-        const {error} = validate(req.body);
-        if(error) return res.status(400).send(error.details[0].message);
-        
-        let user = await User.findOne({email: req.body.email});
-        if(!user) return res.status(400).send('Invalid email or password.');
-
-        const validPassword = await bcrypt.compare(req.body.password, user.password);
-        if(!validPassword) return res.status(400).send('Invalid email or password.');
-
-        const token = user.generateAuthToken();
-        res.send(token);
-    }
-    catch (err) {
-        res.status(400).send(`Error while authenticating ${err.message}`);
-    }
+/**
+ * Authenticate a user
+ * The caller must provide properties emailOrUsername and password.
+ * @returns HTTP 400 if authentication fails because of an invalid
+ * @returns HTTP 200 and a jwt token if authentication is successful
+ * @returns HTTP 500 if an unexpected error occurs
+ */
+router.post('/', validate(validateAuthenticationRequest), async (req, res) => {
+    logger.silly("routes.auth.root called");
+    const token = await userService.authenticateUser(req.body);
+    logger.silly("routes.auth.root authentication done");
+    res.send(token);
 });
 
-function validate(req) {
-    const schema = Joi.object({ 
-        email: Joi.string().min(1).required().email(),
-        password: Joi.string().min(8).required(),
-    });
+// TODO
+// Move password requirements somewhere as constants?
+// Password shouldn't probably be validated too strictly 
+// here because this is for authentication. 
+function validateAuthenticationRequest(req) {
+    const schema = Joi.object({
+        body: Joi.object({
+            emailOrUsername: Joi.string().required(),
+            password: Joi.string().required(),
+        }),
+    }).unknown(true);
     return schema.validate(req);
 }
 
