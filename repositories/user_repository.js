@@ -1,3 +1,4 @@
+const { StatusCodes } = require('http-status-codes');
 const db = require('../database/');
 const logger = require('../util/logger');
 const DatabaseError = require('../util/errors/database_error');
@@ -40,7 +41,7 @@ class UserRepository {
         else if (result.rows.length > 0) {
             throw new DatabaseError(
                 "Multiple users found.", 
-                400, 
+                StatusCodes.BAD_REQUEST, 
                 "error_multiple_users_found",
                 sql,
                 values
@@ -81,7 +82,7 @@ class UserRepository {
         else if (result.rows.length > 1) {
             throw new DatabaseError(
                 "Multiple users found.", 
-                400, 
+                StatusCodes.BAD_REQUEST, 
                 "error_multiple_users_found",
                 sql,
                 values
@@ -128,7 +129,7 @@ class UserRepository {
             if (result.rowCount !== 1) {
                 throw new DatabaseError(
                     "Too many rows inserted.", 
-                    500, 
+                    StatusCodes.INTERNAL_SERVER_ERROR, 
                     "error_too_many_rows_inserted",
                     sql,
                     values

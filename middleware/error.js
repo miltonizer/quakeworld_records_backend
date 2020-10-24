@@ -1,3 +1,4 @@
+const { StatusCodes } = require('http-status-codes');
 const { errorHandler } = require('../util/error_handler');
 const ApplicationError = require('../util/errors/application_error');
 
@@ -12,10 +13,10 @@ module.exports = async function(err, req, res, next) {
         }
         else {
             if(err.messageKey) {
-                res.status(500).send(req.t(err.messageKey));
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(req.t(err.messageKey));
             }
             else {
-                res.status(500).send(req.t('error_internal_server_error'));
+                res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(req.t('error_internal_server_error'));
             }
         }
     }

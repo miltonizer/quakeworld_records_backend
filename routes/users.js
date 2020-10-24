@@ -11,9 +11,8 @@ const userService = new UserService();
 
 // A route for getting information about the user that has logged in
 router.get('/me', auth, async (req, res) => {
-    const { body, error } = await userService.fetchById(req.user.id);
-    if(error) return res.status(400).send(req.t(error));
-    res.status(200).send(body.user);
+    const user = await userService.fetchById(req.user.id);
+    res.send(user);
 });
 
 // Add a new user

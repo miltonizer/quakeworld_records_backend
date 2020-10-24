@@ -1,5 +1,5 @@
 {
-    "jwtPrivateKey": "123456",
+    "jwtPrivateKey": "defaultJwtKey",
     "database_user": "",
     "database_password": "",
     "database_host": "localhost",

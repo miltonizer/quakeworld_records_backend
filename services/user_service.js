@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const { StatusCodes } = require('http-status-codes');
 const UserRepository = require("../repositories/user_repository");
 const userRepository = new UserRepository();
 const logger = require('../util/logger');
-const ApplicationError = require('../util/errors/application_error');
+const UserError = require('../util/errors/user_error');
 const {hashPassword, verifyPassword} = require('../util/password_encryption');
 const User = require( "../models/User");
 
@@ -24,7 +25,7 @@ class UserService {
             requestBody.password
         );
         if(await userRepository.fetchUser(user)) {
-            throw new ApplicationError("User exists already.", 400, "error_user_exists");
+            throw new UserError("User exists already.", StatusCodes.BAD_REQUEST, "error_user_exists");
         }
         else {
             // Hashing the password given by the user
@@ -62,12 +63,12 @@ class UserService {
             )
         );
         if(!user) {
-            throw new ApplicationError("User does not exist.", 400, "error_user_does_not_exist");
+            throw new UserError("User does not exist.", StatusCodes.BAD_REQUEST, "error_user_does_not_exist");
         }
 
         // Verifying password
         if(!await verifyPassword(user.password, passwordFromUser)) {
-            throw new ApplicationError("Invalid username or password", 400, "error_invalid_username_or_password");
+            throw new UserError("Invalid username or password", StatusCodes.BAD_REQUEST, "error_invalid_username_or_password");
         }   
 
         // Generating token to be returned
@@ -82,7 +83,10 @@ class UserService {
      */
     async fetchById(userId) {
         const user = await userRepository.fetchById(userId);
-        if(!user) return { success: false, error: "error_user_does_not_exist" };
+        if(!user) {
+            throw new UserError("User does not exist.", StatusCodes.BAD_REQUEST, "error_user_does_not_exist");
+        }
+        
         user.password = '';
         return user;
     }
