@@ -3,7 +3,6 @@ const express = require('express');
 const Joi = require('joi');
 const validate = require('../middleware/validate');
 const logger = require('../util/logger');
-const { errorHandler } = require('../util/error_handler');
 const router = express.Router();
 const UserService = require( "../services/user_service" );
 const userService = new UserService();
@@ -11,7 +10,8 @@ const userService = new UserService();
 /**
  * Authenticate a user
  * The caller must provide properties emailOrUsername and password.
- * @returns HTTP 400 if authentication fails because of an invalid
+ * @returns HTTP 400 if authentication fails because of a missing token
+ * @returns HTTP 401 if authentication fails because of an invalid token
  * @returns HTTP 200 and a jwt token if authentication is successful
  * @returns HTTP 500 if an unexpected error occurs
  */

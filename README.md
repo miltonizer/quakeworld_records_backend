@@ -1,4 +1,4 @@
-# Quakeworld Book of Records Backend
+# Quakeworld Records Backend
 
 ## Installation
 
@@ -9,11 +9,13 @@
 - Run create_docker_images.ps1 powershell script to create a docker image for the postgres database.
 - Run the postgres docker image in the docker folder. This will create a database and a user that can connect to the given database based on the environment variables set earlier. Notice that the init_db.sh script won't be executed if the data volume is not empty.
 `docker-compose -f docker-compose.yml up -d`
+- Check Schema migration -topic for instructions on how to set up the database further.
 - TODO: Enable SSL for the database?
 
 ## Running
 - Set environment variables by running either the powershell script or the bash script in docker folder. This sets all the required environment variables for running the program. The bash script in Linux has to be run like this:
 `. ./set_environment_variables.sh`
+In production environment quakeworld_records_backend_jwtPrivateKey -environment variable must be set before running the program. It is not set by default because it would override values set in config npm package's JSON configuration files, which would for example break tests.
 - Start the postgres docker container by running:
 `docker-compose -f docker-compose.yml up -d`
 - Run the node backend in the root folder of the project:
@@ -26,15 +28,15 @@
 `npm install -g db-migrate`
 Db-migrate installation might have to be added in the backend Dockerfile as well.
 - Use the following command in the project root folder to update the database to the latest version:
-`db-migrate up`
-This will check NODE_ENV environment variable and load the corresponding database configuration (development, test, production). If connection settings for any of these environments change, the change must be done in the configuration files of config as well as in the db-migrate configuration file (database.json in the root folder of the project).
+`npm run-script db-migrate-up-<environment>`
+This will set NODE_ENV environment variable temporarily and load the corresponding database configuration (development, test, production). If connection settings for any of these environments change, the change must be done in the configuration files of config as well as in the db-migrate configuration file (database.json in the root folder of the project).
 - Create a migration that uses sql files:
-`db-migrate create <name_of_the_migration>`
+`npm run db-migrate-create <name_of_the_migration>`
 After creating a migration a corresponding javascript-file is created in migrations-folder. The SQL commands for this migration need to be added in the corresponding SQL files under migrations/sqls/ -folder. 
 - The migration can be done with commands
-`db-migrate up`
+`npm run-script db-migrate-<environment>-up`
 and
-`db-migrate down`
+`npm run-script db-migrate-<environment>-down`
 - Running a migration writes a line to the database in migrations-table with its id, timestamp and name.
 
 ### Internationalization
@@ -50,7 +52,7 @@ where key is a key for the translation found in one of the translation JSON file
 - Fatal errors should be always thrown as Errors instead of e.g. strings so that the event handler will catch them.
 - Errors happening in the Express request processing pipeline are handled by the middleware/error.js middleware. Before updating to Express major version 5 or higher an additional node package express-async-errors is needed to automatically "catch" errors in asynchronous route handlers. Without express-async-errors the middleware function next() would have to be called explicitly each time an error occured.
 - Errors are handled by util/error_handler.js module and this module should always be called for error handling purposes.
-- Programmer errors aren't caught separately from operational errors because nodeJS doesn't offer a good way to do so.
+- Programmer errors aren't caught separately from operational errors because nodeJS doesn't offer a good way to do so (https://github.com/nodejs/promises/issues/10).
 - Error handling in general is done by throwing Errors and catching them in the middleware/error.js middleware. Custom errors in util/errors/ can be used when needed and the general ApplicationError can be handy because a statusCode and messageKey for i18next can be provided.
 - Transactions with node-postgres are an exception as they need separate error handling.
 - Validation is done with JOI package. There's a middleware function in middleware/validation.js that takes a validation function as a parameter and returns a JOI validation error if such an error exists. The validation function that is given as a parameter has to be customized for each request separately.
@@ -67,5 +69,11 @@ where key is a key for the translation found in one of the translation JSON file
 - The token is verified by jsonwebtoken npm package by giving it the token received in the header and a secret jwtPrivateKey that is stored in an environment variable.
 - If no token is sent the system responses with 401. If the token is invalid the system responses with 400.
 
-### Debugging
-- Use node package called debug controlled by an environment variable called "DEBUG".
+### Testing
+- To run tests:
+`npm test`
+- Winston's console transport is disabled for tests. Use console.log or something else if tests need to be debugged.
+- Tests use npm packages jest and supertest (integration tests).
+- Tests are saved in ./tests -folder and further divided between unit and integration tests.
+- Read comments in the existing test files to understand how to write smooth tests without a lot of copy-paste code.
+- Test coverage report is automatically generated under ./coverage/lcov-report/index.html
