@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env NODE_ENV=test jest --watchAll",
+    "test": "cross-env NODE_ENV=test jest --watchAll --runInBand --detectOpenHandles --coverage --verbose",
     "start": "node index.js",
     "start-dev": "cross-env NODE_ENV=development node index.js",
+    "db-migrate-create": "cross-env NODE_ENV=development db-migrate create --",
     "db-migrate-test-up": "cross-env NODE_ENV=test db-migrate up",
     "db-migrate-dev-up": "cross-env NODE_ENV=development db-migrate up",
     "db-migrate-prod-up": "cross-env NODE_ENV=production db-migrate up",

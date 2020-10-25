@@ -1,26 +1,22 @@
-const User = require('../../models/user');
+const User = require('../../../models/user');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 
 let user = {};
 
-beforeAll(() => {
-    user = new User(
-        "username",
-        "email",
-        "password",
-        false,
-        false,
-        666
-    );
-});
-
-afterAll(() => {
-    
-});
-
 describe('Test set for models.User', () => {
-    it('should set all its properties properly with the constructor', async () => {
+    beforeEach(() => {
+        user = new User(
+            "username",
+            "email",
+            "password",
+            false,
+            false,
+            666
+        );
+    });
+
+    it('should set all its properties properly with the constructor', () => {
         expect.assertions(6);
         
         expect(user.username).toEqual('username');
@@ -31,14 +27,14 @@ describe('Test set for models.User', () => {
         expect(user.id).toEqual(666);
     })
 
-    it('should generate a valid jsonwebtoken with generateAuthToken function', async () => {
+    it('should generate a valid jsonwebtoken with generateAuthToken function', () => {
         expect.assertions(1);
         const payload = {
             id: 666, 
             admin: false,
             superadmin: false
         };
-        const token = await user.generateAuthToken();
+        const token = user.generateAuthToken();
         // Config requires a test.json in its configuration folder(config)
         const decoded = jwt.verify(token, config.get('jwtPrivateKey'));
         expect(decoded).toMatchObject(payload); 

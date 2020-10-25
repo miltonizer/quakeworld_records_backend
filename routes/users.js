@@ -2,7 +2,6 @@ const auth = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const UserService = require( "../services/user_service" );
 const logger = require('../util/logger');
-const { errorHandler } = require('../util/error_handler');
 const _ = require('lodash');
 const Joi = require('joi');
 const express = require('express');

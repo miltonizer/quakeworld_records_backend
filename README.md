@@ -1,4 +1,4 @@
-# Quakeworld Book of Records Backend
+# Quakeworld Records Backend
 
 ## Installation
 
@@ -31,7 +31,7 @@ Db-migrate installation might have to be added in the backend Dockerfile as well
 `npm run-script db-migrate-up-<environment>`
 This will set NODE_ENV environment variable temporarily and load the corresponding database configuration (development, test, production). If connection settings for any of these environments change, the change must be done in the configuration files of config as well as in the db-migrate configuration file (database.json in the root folder of the project).
 - Create a migration that uses sql files:
-`db-migrate create <name_of_the_migration>`
+`npm run db-migrate-create <name_of_the_migration>`
 After creating a migration a corresponding javascript-file is created in migrations-folder. The SQL commands for this migration need to be added in the corresponding SQL files under migrations/sqls/ -folder. 
 - The migration can be done with commands
 `npm run-script db-migrate-<environment>-up`
@@ -69,5 +69,11 @@ where key is a key for the translation found in one of the translation JSON file
 - The token is verified by jsonwebtoken npm package by giving it the token received in the header and a secret jwtPrivateKey that is stored in an environment variable.
 - If no token is sent the system responses with 401. If the token is invalid the system responses with 400.
 
-### Debugging
-- Use node package called debug controlled by an environment variable called "DEBUG".
+### Testing
+- To run tests:
+`npm test`
+- Winston's console transport is disabled for tests. Use console.log or something else if tests need to be debugged.
+- Tests use npm packages jest and supertest (integration tests).
+- Tests are saved in ./tests -folder and further divided between unit and integration tests.
+- Read comments in the existing test files to understand how to write smooth tests without a lot of copy-paste code.
+- Test coverage report is automatically generated under ./coverage/lcov-report/index.html

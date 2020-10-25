@@ -36,7 +36,7 @@ class UserService {
             // Save user
             user = await userRepository.saveUser(user);
 
-            const token = await user.generateAuthToken();
+            const token = user.generateAuthToken();
             logger.silly("services.UserService.createUser user created");
             return { 
                 user: user,
@@ -72,7 +72,7 @@ class UserService {
         }   
 
         // Generating token to be returned
-        return await user.generateAuthToken();
+        return user.generateAuthToken();
     }
 
     /**

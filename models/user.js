@@ -3,7 +3,13 @@ const config = require('config');
 const logger = require('../util/logger');
 
 class User {
-    constructor (username, email, password, admin, superadmin, id) {
+    constructor (
+            username, 
+            email, 
+            password, 
+            admin = false, 
+            superadmin = false, 
+            id) {
         this.username = username;
         this.email = email;
         this.password = password;
@@ -20,7 +26,7 @@ class User {
      * A method for generating authentication token with jwt
      * @returns {jsonwebtoken}
      */
-    async generateAuthToken() {
+    generateAuthToken() {
         // The client should save this token and use it like a driver's
         // licence to avoid authentication again. Privatekey should be secret
         // and the payload can be any information we want to have about the

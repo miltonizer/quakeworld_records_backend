@@ -1,4 +1,4 @@
-const {hashPassword, verifyPassword} = require('../../util/password_encryption');
+const {hashPassword, verifyPassword} = require('../../../util/password_encryption');
 const argon2 = require('argon2');
 
 describe('Test set for util/password_encryption.js hashPassword', () => {

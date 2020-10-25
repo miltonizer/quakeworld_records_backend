@@ -1,7 +1,7 @@
-const UserService = require( "../../services/user_service" );
-const UserRepository = require("../../repositories/user_repository");
-const User = require( "../../models/User");
-const ApplicationError = require('../../util/errors/application_error');
+const UserService = require( "../../../services/user_service" );
+const UserRepository = require("../../../repositories/user_repository");
+const User = require( "../../../models/User");
+const ApplicationError = require('../../../util/errors/application_error');
 
 beforeAll(() => {
 

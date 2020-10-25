@@ -5,13 +5,20 @@ const myFormat = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${label}] ${level}: ${message}`;
 });
 
+let transportsList = [
+    new transports.File({ filename: `./logs/${process.env.NODE_ENV}_error.log`, level: 'error' }),
+    new transports.File({ filename: `./logs/${process.env.NODE_ENV}_all.log`, level: 'silly' })
+];
+
+// Console logging is disabled for tests so that it's easier to follow
+// jest output.
+if(process.env.NODE_ENV !== 'test') {
+    transportsList.push(new transports.Console({level: 'info'}));
+}
+
 const logger = new createLogger({
     level: 'silly',
-    transports: [
-        new transports.File({ filename: './logs/error.log', level: 'error' }),
-        new transports.File({ filename: './logs/all.log', level: 'silly' }),
-        new transports.Console({level: 'info'})
-    ],
+    transports: transportsList,
     exitOnError: false,
     format: combine(timestamp(), myFormat, json())
 });
