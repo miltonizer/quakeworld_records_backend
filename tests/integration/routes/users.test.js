@@ -4,12 +4,13 @@ const db = require('../../../database/');
 const UserRepository = require("../../../repositories/user_repository");
 const userRepository = new UserRepository();
 const User = require( "../../../models/User");
+const {verifyPassword} = require('../../../util/password_encryption');
 
 let server;
 
 describe('/api/users', () => {
     beforeAll(async () => {
-        let sql = `DELETE FROM public.user`;
+        const sql = `DELETE FROM public.user`;
         await db.query(sql);
     });
 
@@ -20,7 +21,7 @@ describe('/api/users', () => {
     afterEach(async () => {
         await server.close();
 
-        let sql = `DELETE FROM public.user`;
+        const sql = `DELETE FROM public.user`;
         await db.query(sql);
     });
 
@@ -90,6 +91,218 @@ describe('/api/users', () => {
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
 
+    });
+
+    describe('PATCH /:id', () => {
+        let requestBody;
+        let id;
+        let token;
+        const exec = async () => {
+            return await request(server)
+                .patch(`/api/users/${id}`)
+                .set('x-auth-token', token)
+                .send(requestBody);
+        }
+
+        beforeEach(async () => {
+            requestBody = {
+                username: "Miltonizer",
+                email: "asdf@asdf.com",
+                password: "password"
+            }
+
+            // Creating a new user to get a valid id
+            const res = await request(server)
+                .post('/api/users')
+                .send(requestBody);
+            id = JSON.parse(res.text).id;
+
+            const user = new User("client", "client@test.com", "password", true, true);
+            token = user.generateAuthToken();
+        });
+        
+        it('should return 401 unauthorized if the user is not authenticated', async () => {
+            expect.assertions(1);
+            token = '';
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
+        });
+
+        it('should return 403 forbidden if the user is not a superadmin', async () => {
+            expect.assertions(1);
+            const onlyAdminUser = new User("client", "client@test.com", "password", true, false);
+            token = onlyAdminUser.generateAuthToken();
+          
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.FORBIDDEN);
+        });
+
+        it('should return 400 bad request if there is no valid patch body', async () => {
+            expect.assertions(5);
+
+            requestBody.username = '';
+            let res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+
+            requestBody.username = 'username';
+            requestBody.email = 'notAValidEmail';
+            res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+
+            requestBody.email = 'asdf@asdf.com';
+            requestBody.password = 'toShort';
+            res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+
+            requestBody.password = 'longEnough';
+            requestBody.admin = null;
+            res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+
+            requestBody.admin = true;
+            requestBody.superadmin = null;
+            res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 400 bad request if user id is not numeric', async () => {
+            expect.assertions(1);
+
+            id = 'Miltonizer'    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 400 bad request if there is no user with the given id', async () => {
+            expect.assertions(1);
+
+            id = 666    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 200 if the user exists and the patch body is valid', async () => {
+            expect.assertions(1);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+        });
+
+        it('should update the user in the database after a successful patch request', async () => {
+            expect.assertions(6);
+
+            requestBody.username = `newUsername`;
+            requestBody.email = `new@email.com`;
+            requestBody.admin = true;
+            requestBody.superadmin = true;
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            const userResponse = await request(server)
+                .get(`/api/users/${id}`)
+                .set('x-auth-token', token)
+                .send();
+            expect(userResponse.status).toBe(StatusCodes.OK);
+
+            const { username, email, admin, superadmin } = JSON.parse(userResponse.text);
+            expect(username).toBe('newUsername');
+            expect(email).toBe('new@email.com');
+            expect(admin).toBe(true);
+            expect(superadmin).toBe(true);
+        });
+
+        it('should update and hash users password after a successful patch request with a password', async() => {
+            expect.assertions(2);
+
+            // Updating user's password
+            requestBody.password = `newPassword`;
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            // Fetching the updated password from the database
+            const sql = `SELECT password
+                        FROM public.user 
+                        WHERE id = $1`;
+            const sqlParameters = [id];
+            const result = await db.query(sql, sqlParameters);
+            const password = result.rows[0].password;
+            expect(verifyPassword(password, requestBody.password)).toBeTruthy();
+        });
+    });
+
+    describe('get /:id', () => {
+        let id;
+        let token;
+        const exec = async () => {
+            return await request(server)
+                .get(`/api/users/${id}`)
+                .set('x-auth-token', token)
+                .send();
+        }
+
+        beforeEach(async () => {
+            const user = new User("client", "client@test.com", "password", true, true);
+            token = user.generateAuthToken();
+        });
+
+        // Should return 
+        it('should return 401 unauthorized if the user is not authenticated', async () => {
+            expect.assertions(1);
+            token = '';
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
+        });
+
+        it('should return 403 forbidden if the user is not an admin', async () => {
+            expect.assertions(1);
+            const standardUser = new User("client", "client@test.com", "password", false, false);
+            token = standardUser.generateAuthToken();
+          
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.FORBIDDEN);
+        });
+
+        it('should return 400 bad request if user id is not numeric', async () => {
+            expect.assertions(1);
+
+            id = 'Miltonizer'    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 400 bad request if there is no user with the given id', async () => {
+            expect.assertions(1);
+
+            id = 666    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 200 OK and a proper user object if a valid request is made', async () => {
+            expect.assertions(6);
+            requestBody = {
+                username: "Miltonizer",
+                email: "asdf@asdf.com",
+                password: "password"
+            }
+
+            // Creating a new user to get a valid id
+            const userCreationResponse = await request(server)
+                .post('/api/users')
+                .send(requestBody);
+            id = JSON.parse(userCreationResponse.text).id;
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            const { username, email, admin, superadmin } = JSON.parse(res.text);
+            const resultId = JSON.parse(res.text).id;
+            expect(username).toBe('Miltonizer');
+            expect(email).toBe('asdf@asdf.com');
+            expect(admin).toBe(false);
+            expect(superadmin).toBe(false);
+            expect(resultId).toBe(id);
+        });
     });
 
     describe('POST /', () => {

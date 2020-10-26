@@ -5,9 +5,10 @@ const myFormat = printf(({ level, message, label, timestamp }) => {
   return `${timestamp} [${label}] ${level}: ${message}`;
 });
 
+const filePrefix = process.env.NODE_ENV ? process.env.NODE_ENV : "development";
 let transportsList = [
-    new transports.File({ filename: `./logs/${process.env.NODE_ENV}_error.log`, level: 'error' }),
-    new transports.File({ filename: `./logs/${process.env.NODE_ENV}_all.log`, level: 'silly' })
+    new transports.File({ filename: `./logs/${filePrefix}_error.log`, level: 'error' }),
+    new transports.File({ filename: `./logs/${filePrefix}_all.log`, level: 'silly' })
 ];
 
 // Console logging is disabled for tests so that it's easier to follow
