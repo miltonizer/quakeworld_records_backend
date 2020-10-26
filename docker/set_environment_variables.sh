@@ -9,3 +9,8 @@ export NODE_ENV=development
 # package will always read the key from this environment value instead of
 # its own json configuration files and for example tests will break.
 #export quakeworld_records_backend_jwtPrivateKey=12345678
+
+# The same thing with node port environment variable. Not setting this in 
+# development makes it easier to run test suites and development environment
+# at the same time.
+#export quakeworld_records_backend_node_port=3000
