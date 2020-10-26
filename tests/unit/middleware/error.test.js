@@ -3,26 +3,13 @@ const errorMiddleware = require('../../../middleware/error');
 const ApplicationError = require('../../../util/errors/application_error');
 const DatabaseError = require('../../../util/errors/database_error');
 const UserError = require('../../../util/errors/user_error');
+const mockResponse = require('../../../util/test/mock_response');
 
 describe('error middleware', () => {
     // Creating a mock response to be able to make chained function
     // calls like res.status().send();
     // Notice how the mock functions can still handle the parameters
     // they receive.
-    const mockResponse = () => {
-        const res = {};
-        res.status = jest.fn( (statusCode) => {
-            res.statusCode = statusCode;
-            return res;
-        });
-        res.json = jest.fn().mockReturnValue(res);
-        res.send = jest.fn( (messageKey) => {
-            res.messageKey = messageKey;
-            return res;
-        });
-        return res;
-    };
-
     const res = mockResponse();
     const next = jest.fn();
     const req = {
