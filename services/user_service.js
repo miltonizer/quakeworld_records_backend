@@ -13,7 +13,8 @@ class UserService {
 
     /**
      * Create a new user
-     * @param  {requestBody} requestBody The validated body of the create user request
+     * @param  {requestBody} requestBody The validated body of the 
+     * create user request
      * @returns {Promise<{user: User, token: jsonwebtoken}>}
      */
     async createUser(requestBody) {
@@ -25,7 +26,9 @@ class UserService {
             requestBody.password
         );
         if(await userRepository.fetchUser(user)) {
-            throw new UserError("User exists already.", StatusCodes.BAD_REQUEST, "error_user_exists");
+            throw new UserError("User exists already.", 
+                StatusCodes.BAD_REQUEST, 
+                "error_user_exists");
         }
         else {
             // Hashing the password given by the user
@@ -35,14 +38,33 @@ class UserService {
 
             // Save user
             user = await userRepository.saveUser(user);
+            logger.silly(`services.UserService.createUser user saved to db: ${JSON.stringify(user)}`);
 
+            // Generating token
             const token = user.generateAuthToken();
+            logger.silly(`services.UserService.createUser token generated: ${JSON.stringify(token)}`);
+
             logger.silly("services.UserService.createUser user created");
             return { 
                 user: user,
                 token: token
             }
         } 
+    }
+
+    /**
+     * Update a user
+     * @param  {requestBody} requestBody The validated body of the 
+     * update user request
+     * @returns {Promise<{user: User}>}
+     */
+    async updateUser(userId, requestBody) {
+        // hash the password if it's been provided
+        if(requestBody.password) {
+            requestBody.password = await hashPassword(requestBody.password);
+        }
+        const user = await userRepository.updateUser(userId, requestBody);
+        return user;
     }
 
     /**
@@ -82,12 +104,14 @@ class UserService {
      * In successful returns the body will contain a valid user object
      */
     async fetchById(userId) {
+        logger.silly(`services.UserService.fetchById called with ${userId}`);
         const user = await userRepository.fetchById(userId);
         if(!user) {
             throw new UserError("User does not exist.", StatusCodes.BAD_REQUEST, "error_user_does_not_exist");
         }
         
         user.password = '';
+        logger.silly(`services.UserService.fetchById done`);
         return user;
     }
 }

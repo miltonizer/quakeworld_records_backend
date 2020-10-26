@@ -64,10 +64,12 @@ where key is a key for the translation found in one of the translation JSON file
 
 ### Authentication and authorization
 - The system uses jsonwebtoken npm package to handle authentication.
-- The routes that require authentication need to use the auth middlware in middlware/auth.js.
+- The routes that require authentication need to use the auth middleware in middelware/auth.js.
 - To be able to access endpoints that require authentication the client is required to send a valid jsonwebtoken with the request. The token should be send in an http header called x-auth-token. 
 - The token is verified by jsonwebtoken npm package by giving it the token received in the header and a secret jwtPrivateKey that is stored in an environment variable.
 - If no token is sent the system responses with 401. If the token is invalid the system responses with 400.
+- Authorization is handled by two roles and middlewares respectively: admin and superadmin.
+  - The admin and superadmin middlewares mentioned above should always and only be used after calling the auth middleware first. This is because admin and superadmin middlewares only read admin and/or superadmin information from the request. If the request is not authenticated first clients can set those properties to any values.
 
 ### Testing
 - To run tests:

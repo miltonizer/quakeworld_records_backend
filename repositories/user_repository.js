@@ -2,6 +2,7 @@ const { StatusCodes } = require('http-status-codes');
 const db = require('../database/');
 const logger = require('../util/logger');
 const DatabaseError = require('../util/errors/database_error');
+const UserError = require('../util/errors/user_error');
 const User = require( "../models/User");
 
 class UserRepository {
@@ -13,7 +14,10 @@ class UserRepository {
      * username and email set.
      * @returns {Promise<{User}|null>}
      * Body contains the inserted user object with id, username, email, 
-     * admin and superadmin fields set.
+     * password, admin and superadmin fields set.
+     * 
+     * WARNING: unset the password field before returning 
+     * the object to clients
      * 
      * This function won't try to handle errors but throws them
      * instead.
@@ -24,8 +28,8 @@ class UserRepository {
         const sql = `SELECT id, username, email, password, admin, superadmin 
                      FROM public.user 
                      WHERE email = $1 OR username = $2`;
-        const values = [email, username];
-        const result = await db.query(sql, values);
+        const sqlParameters = [email, username];
+        const result = await db.query(sql, sqlParameters);
         logger.silly("repositories.UserRepository.fetchUser query done");
         if (result.rows.length == 1) {
             const user = new User(
@@ -44,7 +48,7 @@ class UserRepository {
                 StatusCodes.BAD_REQUEST, 
                 "error_multiple_users_found",
                 sql,
-                values
+                sqlParameters
             );
         }
         return null;
@@ -55,18 +59,21 @@ class UserRepository {
      * @param id The id of the user
      * @returns {Promise<{User}|null>}
      * Body contains the fetched user object with id, username, email, 
-     * admin and superadmin fields set.
+     * password, admin and superadmin fields set.
+     * 
+     * WARNING: unset the password field before returning 
+     * the object to clients
      * 
      * This function won't try to handle errors but throws them
      * instead.
      */
     async fetchById(userId) {
         logger.silly("repositories.UserRepository.fetchById called");
-        const sql = `SELECT id, username, password, email, admin, superadmin 
+        const sql = `SELECT id, username, email, password, admin, superadmin 
                      FROM public.user 
                      WHERE id = $1`;
-        const values = [userId];
-        const result = await db.query(sql, values);
+        const sqlParameters = [userId];
+        const result = await db.query(sql, sqlParameters);
         logger.silly("repositories.UserRepository.fetchById query done");
         if (result.rows.length == 1) {
             const user = new User(
@@ -85,10 +92,108 @@ class UserRepository {
                 StatusCodes.BAD_REQUEST, 
                 "error_multiple_users_found",
                 sql,
-                values
+                sqlParameters
             );
         }
         return null;
+    }
+
+    /**
+     * Update an existing user in the database
+     * @param {userId} userId an id of the user to be updated
+     * @param {requestBody} a validated requestBody containing at
+     * least one of the following properties: 
+     * username, email, password, admin, superadmin
+     * @returns {Promise<{User}>}
+     * Body contains the inserted user object with id, username, email, 
+     * admin and superadmin fields set.
+     * 
+     * This function won't try to handle errors but throws them
+     * instead. Throws a UserError if no user with the given id
+     * exists.
+     */
+    async updateUser(userId, requestBody) {
+        logger.silly(`repositories.UserRepository.updateUser called with id: ${userId} requestbody: ${JSON.stringify(requestBody)}`);
+        let somethingAlreadySet = false;
+        let sqlParameters = [];
+        let sql = `UPDATE public.user SET `;
+
+        if(requestBody.username) {
+            if(somethingAlreadySet) sql += `,`;
+            somethingAlreadySet = true;
+            sqlParameters.push(requestBody.username);         
+            sql += `username = $${sqlParameters.length} `;        
+        }
+        if(requestBody.email) {
+            if(somethingAlreadySet) sql += `,`;
+            somethingAlreadySet = true;
+            sqlParameters.push(requestBody.email);         
+            sql += `email = $${sqlParameters.length} `;        
+        } 
+        if(requestBody.password) {
+            if(somethingAlreadySet) sql += `,`;
+            somethingAlreadySet = true;
+            sqlParameters.push(requestBody.password);       
+            sql += `password = $${sqlParameters.length} `;    
+        } 
+        if(requestBody.admin) {
+            if(somethingAlreadySet) sql += `,`;
+            somethingAlreadySet = true;
+            sqlParameters.push(requestBody.admin);       
+            sql += `admin = $${sqlParameters.length} `;   
+        } 
+        if(requestBody.superadmin) {
+            if(somethingAlreadySet) sql += `,`;
+            somethingAlreadySet = true;
+            sqlParameters.push(requestBody.superadmin);       
+            sql += `superadmin = $${sqlParameters.length} `;  
+        }
+
+        sqlParameters.push(userId);
+        sql += `WHERE id = $${sqlParameters.length}
+                RETURNING id, username, email, admin, superadmin`;
+        const client = await db.pool.connect();
+
+        try {
+            await client.query('BEGIN');
+            
+            const result = await client.query(sql, sqlParameters);
+
+            // The function should update exactly one row
+            if (result.rowCount > 1) {
+                throw new DatabaseError(
+                    "Too many rows updated.", 
+                    StatusCodes.INTERNAL_SERVER_ERROR, 
+                    "error_too_many_rows_updated",
+                    sql,
+                    sqlParameters
+                );
+            }
+            else if(result.rowCount === 0) {
+                throw new UserError("User does not exist.", 
+                                    StatusCodes.BAD_REQUEST, 
+                                    "error_user_does_not_exist");
+            }
+            await client.query('COMMIT');
+
+            logger.silly("repositories.UserRepository.updateUser query done");
+            const user = new User(
+                result.rows[0].username,
+                result.rows[0].email,
+                '',
+                result.rows[0].admin,
+                result.rows[0].superadmin,
+                result.rows[0].id
+            );
+            return user;
+        } 
+        catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } 
+        finally {
+            client.release();
+        }
     }
 
     /**
@@ -96,7 +201,7 @@ class UserRepository {
      * @param {User} user A validated user object
      * @returns {Promise<{User}>}
      * Body contains the inserted user object with id, username, email, 
-     * admin and superadmin fields set.
+     * password, admin and superadmin fields set.
      * 
      * This function won't try to handle errors but throws them
      * instead.
@@ -109,8 +214,8 @@ class UserRepository {
                                             admin, 
                                             superadmin) 
                                 VALUES ($1, $2, $3, $4, $5)
-                                RETURNING *`;
-        const values = [
+                                RETURNING id, username, email, admin, superadmin`;
+        const sqlParameters = [
             user.username,
             user.email,
             user.password,
@@ -123,7 +228,7 @@ class UserRepository {
         try {
             await client.query('BEGIN');
             
-            const result = await client.query(sql, values);
+            const result = await client.query(sql, sqlParameters);
 
             // The function should save exactly one row
             if (result.rowCount !== 1) {
@@ -132,7 +237,7 @@ class UserRepository {
                     StatusCodes.INTERNAL_SERVER_ERROR, 
                     "error_too_many_rows_inserted",
                     sql,
-                    values
+                    sqlParameters
                 );
             }
             await client.query('COMMIT');
@@ -141,7 +246,7 @@ class UserRepository {
             const user = new User(
                 result.rows[0].username,
                 result.rows[0].email,
-                result.rows[0].password,
+                '',
                 result.rows[0].admin,
                 result.rows[0].superadmin,
                 result.rows[0].id
@@ -157,4 +262,5 @@ class UserRepository {
         }
     }
 }
+
 module.exports = UserRepository;

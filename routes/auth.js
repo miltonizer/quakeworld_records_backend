@@ -22,8 +22,6 @@ router.post('/', validate(validateAuthenticationRequest), async (req, res) => {
     res.send(token);
 });
 
-// TODO
-// Move password requirements somewhere as constants?
 // Password shouldn't probably be validated too strictly 
 // here because this is for authentication. 
 function validateAuthenticationRequest(req) {

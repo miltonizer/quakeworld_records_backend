@@ -1,5 +1,5 @@
 {
-    "jwtPrivateKey": "testKey",
+    "jwtPrivateKey": "privateKey",
     "database_user": "",
     "database_password": "",
     "database_host": "localhost",
