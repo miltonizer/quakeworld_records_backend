@@ -18,7 +18,7 @@ describe('/api/users', () => {
     });
 
     afterEach(async () => {
-        server.close();
+        await server.close();
 
         let sql = `DELETE FROM public.user`;
         await db.query(sql);

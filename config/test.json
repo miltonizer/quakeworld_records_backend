@@ -4,5 +4,6 @@
     "database_password": "",
     "database_host": "localhost",
     "database_port": "5432",
-    "database_name": "quakeworld_records_test"
+    "database_name": "quakeworld_records_test",
+    "node_port": 3666
 }

@@ -8,3 +8,8 @@
 # package will always read the key from this environment value instead of
 # its own json configuration files and for example tests will break.
 #[Environment]::SetEnvironmentVariable('quakeworld_records_backend_jwtPrivateKey','12345678',[EnvironmentVariableTarget]::User)
+
+# The same thing with node port environment variable. Not setting this in 
+# development makes it easier to run test suites and development environment
+# at the same time.
+#[Environment]::SetEnvironmentVariable('quakeworld_records_backend_node_port','3000',[EnvironmentVariableTarget]::User)
