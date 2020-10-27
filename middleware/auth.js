@@ -2,8 +2,7 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 const { StatusCodes } = require('http-status-codes');
 const UserError = require('../util/errors/user_error');
-const UserService = require('../services/user_service');
-const userService = new UserService();
+const userValidator = require('../util/user_validator');
 
 // This middleware function checks if client's token is valid. The token
 // should be sent in a header called x-auth-token (could be named something
@@ -23,19 +22,12 @@ module.exports = async function (req, res, next) {
     try {
         const decoded = jwt.verify(token, config.get('jwtPrivateKey'));
         req.user = decoded;
-        //if(await userService.fetchById(req.user.id)) {
-            next();
-       // }
 
         // Making sure here that a deleted user can't continue using his
         // old token.
-       /*  else {
-            throw new UserError(
-                "Authentication attempt with a token of a deleted user", 
-                StatusCodes.INTERNAL_SERVER_ERROR, 
-                "error_deleted_user"
-            );
-        } */
+        if(await userValidator(req.user)) {
+            next();
+        }
     }
     catch (err) {
         if(err instanceof UserError) throw err;
