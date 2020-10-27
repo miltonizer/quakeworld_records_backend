@@ -159,7 +159,7 @@ describe('/api/users', () => {
         it('should return 400 bad request if there is no user with the given id', async () => {
             expect.assertions(1);
 
-            adminId = 666    
+            adminId = '666';
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });

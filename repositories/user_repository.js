@@ -115,7 +115,7 @@ class UserRepository {
         const { rowCount } = await db.query(sql, sqlParameters);
         logger.silly("repositories.UserRepository.deleteById query done");
         if (rowCount == 1) {
-            return rowCount;
+            return;
         }
         else if(rowCount === 0) {
             throw new UserError("User does not exist.", 

@@ -122,11 +122,7 @@ class UserService {
      */
     async deleteById(userId) {
         logger.silly(`services.UserService.deleteById called with ${userId}`);
-        const deletedRowCount = await userRepository.deleteById(userId);
-        if(!deletedRowCount) {
-            throw new UserError("User does not exist.", StatusCodes.BAD_REQUEST, "error_user_does_not_exist");
-        }
-
+        await userRepository.deleteById(userId);
         logger.silly(`services.UserService.deleteById done`);
         return;
     }
