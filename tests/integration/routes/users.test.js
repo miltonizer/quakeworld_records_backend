@@ -25,7 +25,7 @@ describe('/api/users', () => {
         await db.query(sql);
     });
 
-    describe('get /me', () => {
+    describe('GET /me', () => {
         let token;
         beforeEach(async () => {
             // Creating a new user to get a valid token
@@ -74,34 +74,119 @@ describe('/api/users', () => {
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
+    });
 
-        it('should respond 400 BAD_REQUEST if token is valid but the user isnt in the database', async () => {
-            user = new User(
-                "username",
-                "email",
-                "password",
-                false,
-                false,
-                666
-            );
-            token = await user.generateAuthToken();
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
+    describe('DELETE /:id', () => {
+        let id;
+        let token;
+        let clientId;
+        const exec = async () => {
+            return await request(server)
+                .delete(`/api/users/${id}`)
+                .set('x-auth-token', token)
+                .send();
+        }
+
+        beforeEach(async () => {
+            clientBody = {
+                username: "client",
+                email: "client@test.com",
+                password: "password"
+            }
+
+            requestBody = {
+                username: "Miltonizer",
+                email: "asdf@asdf.com",
+                password: "password"
+            }
+
+            // Creating a new user to get a valid id
+            const res = await request(server)
+                .post('/api/users')
+                .send(requestBody);
+            id = JSON.parse(res.text).id;
+
+            // Creating another user (client) to get a valid clientId
+            const clientRes = await request(server)
+                .post('/api/users')
+                .send(clientBody);
+            clientId = JSON.parse(clientRes.text).id;
+
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const user = new User("client", "client@asdf.com", "password", true, true, clientId);
+            token = user.generateAuthToken();
+        });
+        
+        it('should return 401 unauthorized if the user is not authenticated', async () => {
             expect.assertions(1);
+            token = '';
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
+        });
+
+        it('should return 403 forbidden if the user is not a superadmin', async () => {
+            expect.assertions(1);
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const onlyAdminUser = new User("client", "client@test.com", "password", true, false, clientId);
+            token = onlyAdminUser.generateAuthToken();
+          
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.FORBIDDEN);
+        });
+
+        it('should return 400 bad request if user id is not numeric', async () => {
+            expect.assertions(1);
+
+            id = 'Miltonizer'    
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
 
+        it('should return 400 bad request if there is no user with the given id', async () => {
+            expect.assertions(1);
+
+            id = 666    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 200 if the user exists', async () => {
+            expect.assertions(1);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+        });
+
+        it('the user should be removed from the database after a successful request', async () => {
+            expect.assertions(2);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            const userResponse = await request(server)
+                .get(`/api/users/${id}`)
+                .set('x-auth-token', token)
+                .send();
+            expect(userResponse.status).toBe(StatusCodes.BAD_REQUEST);
+        });
     });
 
-    describe('PATCH /:id', () => {
-        let requestBody;
-        let id;
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('DELETE /me', () => {
         let token;
+        let id;
         const exec = async () => {
             return await request(server)
-                .patch(`/api/users/${id}`)
+                .delete(`/api/users/me`)
                 .set('x-auth-token', token)
-                .send(requestBody);
+                .send();
         }
 
         beforeEach(async () => {
@@ -117,7 +202,76 @@ describe('/api/users', () => {
                 .send(requestBody);
             id = JSON.parse(res.text).id;
 
-            const user = new User("client", "client@test.com", "password", true, true);
+            // Creating a matching token for the user just created
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const user = new User("Miltonizer", "asdf@asdf.com", "password", false, false, id);
+            token = user.generateAuthToken();
+        });
+        
+        it('should return 401 unauthorized if the user is not authenticated', async () => {
+            expect.assertions(1);
+            token = '';
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
+        });
+
+        it('the user should be removed from the database after a successful request', async () => {
+            expect.assertions(2);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            const userResponse = await request(server)
+                .get(`/api/users/me`)
+                .set('x-auth-token', token)
+                .send();
+            expect(userResponse.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+    });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('PATCH /:id', () => {
+        let requestBody;
+        let id;
+        let token;
+        const exec = async () => {
+            return await request(server)
+                .patch(`/api/users/${id}`)
+                .set('x-auth-token', token)
+                .send(requestBody);
+        }
+
+        beforeEach(async () => {
+            clientBody = {
+                username: "client",
+                email: "client@test.com",
+                password: "password"
+            }
+
+            requestBody = {
+                username: "Miltonizer",
+                email: "asdf@asdf.com",
+                password: "password"
+            }
+
+            // Creating a new user to get a valid id
+            const res = await request(server)
+                .post('/api/users')
+                .send(requestBody);
+            id = JSON.parse(res.text).id;
+
+            // Creating a new user to get a valid client id
+            const clientRes = await request(server)
+                .post('/api/users')
+                .send(clientBody);
+            clientId = JSON.parse(clientRes.text).id;
+
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const user = new User("client", "client@test.com", "password", true, true, clientId);
             token = user.generateAuthToken();
         });
         
@@ -130,7 +284,9 @@ describe('/api/users', () => {
 
         it('should return 403 forbidden if the user is not a superadmin', async () => {
             expect.assertions(1);
-            const onlyAdminUser = new User("client", "client@test.com", "password", true, false);
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const onlyAdminUser = new User("client", "client@test.com", "password", true, false, clientId);
             token = onlyAdminUser.generateAuthToken();
           
             const res = await exec();
@@ -230,9 +386,13 @@ describe('/api/users', () => {
         });
     });
 
-    describe('get /:id', () => {
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('GET /:id', () => {
         let id;
         let token;
+        let clientId;
         const exec = async () => {
             return await request(server)
                 .get(`/api/users/${id}`)
@@ -241,7 +401,20 @@ describe('/api/users', () => {
         }
 
         beforeEach(async () => {
-            const user = new User("client", "client@test.com", "password", true, true);
+            // Creating a new user to get a valid id
+            client = {
+                username: "client",
+                email: "client@test.com",
+                password: "password"
+            }
+            const clientUserCreationResponse = await request(server)
+                                            .post('/api/users')
+                                            .send(client);
+            clientId = JSON.parse(clientUserCreationResponse.text).id;
+
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const user = new User("client", "client@test.com", "password", true, true, clientId);
             token = user.generateAuthToken();
         });
 
@@ -255,7 +428,16 @@ describe('/api/users', () => {
 
         it('should return 403 forbidden if the user is not an admin', async () => {
             expect.assertions(1);
-            const standardUser = new User("client", "client@test.com", "password", false, false);
+            // TODO: this user information doesn't necessarily match the
+            // user's information in the database
+            const standardUser = new User(
+                "client", 
+                "client@test.com", 
+                "password", 
+                false, 
+                false, 
+                clientId
+            );
             token = standardUser.generateAuthToken();
           
             const res = await exec();
@@ -286,12 +468,15 @@ describe('/api/users', () => {
                 password: "password"
             }
 
-            // Creating a new user to get a valid id
+            // Creating a new user to get a valid id of a user
+            // that is fetched from the database.
             const userCreationResponse = await request(server)
-                .post('/api/users')
-                .send(requestBody);
+                                            .post('/api/users')
+                                            .send(requestBody);
             id = JSON.parse(userCreationResponse.text).id;
 
+            // This query uses the id created above but a token
+            // created with clientId
             const res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
@@ -304,6 +489,9 @@ describe('/api/users', () => {
             expect(resultId).toBe(id);
         });
     });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
     describe('POST /', () => {
         // Define the happy path, and then in each test one parameter 

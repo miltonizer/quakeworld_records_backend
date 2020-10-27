@@ -23,6 +23,9 @@ describe('admin middleware tests', () => {
 
     it('should throw an error if req is not provided', () => {
         req = null;
+        // From the jest documentation:
+        // "Note: You must wrap the code in a function, otherwise
+        // the error will not be caught and the assertion will fail."
         expect(() => {
             adminMiddleware(req, res, next);
         }).toThrow();

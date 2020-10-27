@@ -99,6 +99,41 @@ class UserRepository {
     }
 
     /**
+     * Deletes a user from the database
+     * @param id The id of the user
+     * @returns {Promise<number of rows affected>}
+     * 
+     * This function won't try to handle errors but throws them
+     * instead.
+     */
+    async deleteById(userId) {
+        logger.silly("repositories.UserRepository.deleteById called");
+        const sql = `DELETE 
+                     FROM public.user 
+                     WHERE id = $1`;
+        const sqlParameters = [userId];
+        const { rowCount } = await db.query(sql, sqlParameters);
+        logger.silly("repositories.UserRepository.deleteById query done");
+        if (rowCount == 1) {
+            return rowCount;
+        }
+        else if(rowCount === 0) {
+            throw new UserError("User does not exist.", 
+                                StatusCodes.BAD_REQUEST, 
+                                "error_user_does_not_exist");
+        }
+        else {
+            throw new DatabaseError(
+                "Too many rows deleted.", 
+                StatusCodes.INTERNAL_SERVER_ERROR, 
+                "error_too_many_rows_deleted",
+                sql,
+                sqlParameters
+            );
+        }
+    }
+
+    /**
      * Update an existing user in the database
      * @param {userId} userId an id of the user to be updated
      * @param {requestBody} a validated requestBody containing at
