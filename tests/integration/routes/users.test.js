@@ -7,8 +7,13 @@ const User = require( "../../../models/User");
 const {verifyPassword} = require('../../../util/password_encryption');
 
 let server;
+let adminId;
+let adminToken;
+let superAdminId;
+let superAdminToken;
 
 describe('/api/users', () => {
+    
     beforeAll(async () => {
         const sql = `DELETE FROM public.user`;
         await db.query(sql);
@@ -16,6 +21,60 @@ describe('/api/users', () => {
 
     beforeEach(async () => {
         server = require('../../../index');
+
+        // Creating a superadmin to get a valid id and token for him
+        let sql = `INSERT INTO public.user (username,
+                                email, 
+                                password, 
+                                admin, 
+                                superadmin) 
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING id, username, email, admin, superadmin`;
+        let sqlParameters = [
+            "superadmin",
+            "superadmin@test.com",
+            "user.password",
+            true,
+            true
+        ];
+
+        const superAdminResult = await db.query(sql, sqlParameters);
+        const superAdminUser = new User(
+            superAdminResult.rows[0].username, 
+            superAdminResult.rows[0].email,
+            superAdminResult.rows[0].password,
+            superAdminResult.rows[0].admin,
+            superAdminResult.rows[0].superadmin,
+            superAdminResult.rows[0].id);
+        superAdminId = superAdminUser.id;
+        superAdminToken = superAdminUser.generateAuthToken();
+
+        // Creating a superadmin to get a valid id and token for him
+        sql = `INSERT INTO public.user (username,
+                                email, 
+                                password, 
+                                admin, 
+                                superadmin) 
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id, username, email, admin, superadmin`;
+        sqlParameters = [
+            "admin",
+            "admin@test.com",
+            "user.password",
+            true,
+            false
+        ];
+
+        const adminResult = await db.query(sql, sqlParameters);
+        const adminUser = new User(
+            adminResult.rows[0].username, 
+            adminResult.rows[0].email,
+            adminResult.rows[0].password,
+            adminResult.rows[0].admin,
+            adminResult.rows[0].superadmin,
+            adminResult.rows[0].id);
+        adminId = adminUser.id;
+        adminToken = adminUser.generateAuthToken();
     });
 
     afterEach(async () => {
@@ -25,24 +84,11 @@ describe('/api/users', () => {
         await db.query(sql);
     });
 
-    describe('get /me', () => {
-        let token;
-        beforeEach(async () => {
-            // Creating a new user to get a valid token
-            const res = await request(server)
-                .post('/api/users')
-                .send({
-                    username: "Miltonizer",
-                    email: "asdf@asdf.com",
-                    password: "password"
-                });
-            token = res.headers['x-auth-token'];
-        });
-
+    describe('GET /me', () => {
         const exec = async () => {
             return await request(server)
                 .get('/api/users/me')
-                .set('x-auth-token', token)
+                .set('x-auth-token', adminToken)
                 .send();                    
         }
 
@@ -60,47 +106,126 @@ describe('/api/users', () => {
                 admin, 
                 superadmin, 
                 id } = JSON.parse(res.text);
-            expect(username).toBe('Miltonizer');
-            expect(email).toBe('asdf@asdf.com');
+            expect(username).toBe('admin');
+            expect(email).toBe('admin@test.com');
             expect(password).toHaveLength(0);
-            expect(admin).toBe(false);
+            expect(admin).toBe(true);
             expect(superadmin).toBe(false);
-            expect(id).toBeDefined();
+            expect(id).toBe(adminId);
         });
         
         it('should respond 400 BAD_REQUEST if token is invalid', async () => {
-            token = 'invalid_token';
+            adminToken = 'invalid_token';
             expect.assertions(1);
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
-
-        it('should respond 400 BAD_REQUEST if token is valid but the user isnt in the database', async () => {
-            user = new User(
-                "username",
-                "email",
-                "password",
-                false,
-                false,
-                666
-            );
-            token = await user.generateAuthToken();
-
-            expect.assertions(1);
-            const res = await exec();
-            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
-        });
-
     });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('DELETE /:id', () => {
+        const exec = async () => {
+            return await request(server)
+                .delete(`/api/users/${adminId}`)
+                .set('x-auth-token', superAdminToken)
+                .send();
+        }
+        
+        it('should return 401 unauthorized if the user is not authenticated', async () => {
+            expect.assertions(1);
+            superAdminToken = '';
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
+        });
+
+        it('should return 403 forbidden if the user is not a superadmin', async () => {
+            expect.assertions(1);
+            superAdminToken = adminToken;
+          
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.FORBIDDEN);
+        });
+
+        it('should return 400 bad request if user id is not numeric', async () => {
+            expect.assertions(1);
+
+            adminId = 'Miltonizer'    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 400 bad request if there is no user with the given id', async () => {
+            expect.assertions(1);
+
+            adminId = 666    
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+
+        it('should return 200 if the user exists', async () => {
+            expect.assertions(1);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+        });
+
+        it('the user should be removed from the database after a successful request', async () => {
+            expect.assertions(2);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            const userResponse = await request(server)
+                .get(`/api/users/${adminId}`)
+                .set('x-auth-token', superAdminToken)
+                .send();
+            expect(userResponse.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+    });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('DELETE /me', () => {
+        const exec = async () => {
+            return await request(server)
+                .delete(`/api/users/me`)
+                .set('x-auth-token', adminToken)
+                .send();
+        }
+        
+        it('should return 401 unauthorized if the user is not authenticated', async () => {
+            expect.assertions(1);
+            adminToken = '';
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
+        });
+
+        it('the user should be removed from the database after a successful request', async () => {
+            expect.assertions(2);
+
+            const res = await exec();
+            expect(res.status).toBe(StatusCodes.OK);
+
+            const userResponse = await request(server)
+                .get(`/api/users/me`)
+                .set('x-auth-token', adminToken)
+                .send();
+            expect(userResponse.status).toBe(StatusCodes.BAD_REQUEST);
+        });
+    });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
     describe('PATCH /:id', () => {
         let requestBody;
-        let id;
-        let token;
         const exec = async () => {
             return await request(server)
-                .patch(`/api/users/${id}`)
-                .set('x-auth-token', token)
+                .patch(`/api/users/${adminId}`)
+                .set('x-auth-token', superAdminToken)
                 .send(requestBody);
         }
 
@@ -110,28 +235,18 @@ describe('/api/users', () => {
                 email: "asdf@asdf.com",
                 password: "password"
             }
-
-            // Creating a new user to get a valid id
-            const res = await request(server)
-                .post('/api/users')
-                .send(requestBody);
-            id = JSON.parse(res.text).id;
-
-            const user = new User("client", "client@test.com", "password", true, true);
-            token = user.generateAuthToken();
         });
         
         it('should return 401 unauthorized if the user is not authenticated', async () => {
             expect.assertions(1);
-            token = '';
+            superAdminToken = '';
             const res = await exec();
             expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
         });
 
         it('should return 403 forbidden if the user is not a superadmin', async () => {
             expect.assertions(1);
-            const onlyAdminUser = new User("client", "client@test.com", "password", true, false);
-            token = onlyAdminUser.generateAuthToken();
+            superAdminToken = adminToken;
           
             const res = await exec();
             expect(res.status).toBe(StatusCodes.FORBIDDEN);
@@ -168,7 +283,7 @@ describe('/api/users', () => {
         it('should return 400 bad request if user id is not numeric', async () => {
             expect.assertions(1);
 
-            id = 'Miltonizer'    
+            adminId = 'Miltonizer'    
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
@@ -176,7 +291,7 @@ describe('/api/users', () => {
         it('should return 400 bad request if there is no user with the given id', async () => {
             expect.assertions(1);
 
-            id = 666    
+            adminId = 666    
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
@@ -199,8 +314,8 @@ describe('/api/users', () => {
             expect(res.status).toBe(StatusCodes.OK);
 
             const userResponse = await request(server)
-                .get(`/api/users/${id}`)
-                .set('x-auth-token', token)
+                .get(`/api/users/${adminId}`)
+                .set('x-auth-token', superAdminToken)
                 .send();
             expect(userResponse.status).toBe(StatusCodes.OK);
 
@@ -223,40 +338,57 @@ describe('/api/users', () => {
             const sql = `SELECT password
                         FROM public.user 
                         WHERE id = $1`;
-            const sqlParameters = [id];
+            const sqlParameters = [adminId];
             const result = await db.query(sql, sqlParameters);
             const password = result.rows[0].password;
             expect(verifyPassword(password, requestBody.password)).toBeTruthy();
         });
     });
 
-    describe('get /:id', () => {
-        let id;
-        let token;
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('GET /:id', () => {
+        let normalUserId;
+        let normalUserToken;
         const exec = async () => {
             return await request(server)
-                .get(`/api/users/${id}`)
-                .set('x-auth-token', token)
+                .get(`/api/users/${adminId}`)
+                .set('x-auth-token', superAdminToken)
                 .send();
         }
 
         beforeEach(async () => {
-            const user = new User("client", "client@test.com", "password", true, true);
-            token = user.generateAuthToken();
+            requestBody = {
+                username: "normalUser",
+                email: "normaluser@test.com",
+                password: "password"
+            }
+            const userCreationResponse = await request(server)
+                                            .post('/api/users')
+                                            .send(requestBody);
+            const { username, email, admin, superadmin, id } = JSON.parse(userCreationResponse.text);
+            normalUserId = id;
+            const normalUser = new User(
+                username, 
+                email,
+                '',
+                admin,
+                superadmin,
+                id);
+            normalUserToken = normalUser.generateAuthToken();
         });
 
-        // Should return 
         it('should return 401 unauthorized if the user is not authenticated', async () => {
             expect.assertions(1);
-            token = '';
+            superAdminToken = '';
             const res = await exec();
             expect(res.status).toBe(StatusCodes.UNAUTHORIZED);
         });
 
         it('should return 403 forbidden if the user is not an admin', async () => {
             expect.assertions(1);
-            const standardUser = new User("client", "client@test.com", "password", false, false);
-            token = standardUser.generateAuthToken();
+            superAdminToken = normalUserToken
           
             const res = await exec();
             expect(res.status).toBe(StatusCodes.FORBIDDEN);
@@ -265,7 +397,7 @@ describe('/api/users', () => {
         it('should return 400 bad request if user id is not numeric', async () => {
             expect.assertions(1);
 
-            id = 'Miltonizer'    
+            adminId = 'Miltonizer'    
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
@@ -273,37 +405,29 @@ describe('/api/users', () => {
         it('should return 400 bad request if there is no user with the given id', async () => {
             expect.assertions(1);
 
-            id = 666    
+            adminId = 666    
             const res = await exec();
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
 
         it('should return 200 OK and a proper user object if a valid request is made', async () => {
             expect.assertions(6);
-            requestBody = {
-                username: "Miltonizer",
-                email: "asdf@asdf.com",
-                password: "password"
-            }
-
-            // Creating a new user to get a valid id
-            const userCreationResponse = await request(server)
-                .post('/api/users')
-                .send(requestBody);
-            id = JSON.parse(userCreationResponse.text).id;
 
             const res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
             const { username, email, admin, superadmin } = JSON.parse(res.text);
             const resultId = JSON.parse(res.text).id;
-            expect(username).toBe('Miltonizer');
-            expect(email).toBe('asdf@asdf.com');
-            expect(admin).toBe(false);
+            expect(username).toBe('admin');
+            expect(email).toBe('admin@test.com');
+            expect(admin).toBe(true);
             expect(superadmin).toBe(false);
-            expect(resultId).toBe(id);
+            expect(resultId).toBe(adminId);
         });
     });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
     describe('POST /', () => {
         // Define the happy path, and then in each test one parameter 

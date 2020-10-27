@@ -114,5 +114,21 @@ class UserService {
         logger.silly(`services.UserService.fetchById done`);
         return user;
     }
+
+    /**
+     * Delete user by id
+     * @param id The id of the user that has logged in
+     * @returns undefined
+     */
+    async deleteById(userId) {
+        logger.silly(`services.UserService.deleteById called with ${userId}`);
+        const deletedRowCount = await userRepository.deleteById(userId);
+        if(!deletedRowCount) {
+            throw new UserError("User does not exist.", StatusCodes.BAD_REQUEST, "error_user_does_not_exist");
+        }
+
+        logger.silly(`services.UserService.deleteById done`);
+        return;
+    }
 }
 module.exports = UserService;

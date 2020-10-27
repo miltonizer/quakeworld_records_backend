@@ -17,15 +17,31 @@ router.get('/me', auth, async (req, res) => {
     res.send(user);
 });
 
+router.delete('/me', auth, async (req, res) => {
+    await userService.deleteById(req.user.id);
+    res.send();
+});
+
 /**
  * Fetches a user from the database
  * @param id The id of the user
  * @returns {Promise<{User}|null>}
- * User with the given id must be exist in the database.
+ * User with the given id must exist in the database.
  */
-router.get('/:id', [auth, admin, validate(validateUserGet)], async (req, res) => {
+router.get('/:id', [auth, admin, validate(validateUserId)], async (req, res) => {
     const user = await userService.fetchById(req.params.id);
     res.send(user);
+});
+
+/**
+ * Deletes a user from the database
+ * @param id The id of the user
+ * @returns true
+ * User with the given id must exist in the database.
+ */
+router.delete('/:id', [auth, superadmin, validate(validateUserId)], async (req, res) => {
+    await userService.deleteById(req.params.id);
+    res.send();
 });
 
 // Add a new user
@@ -86,7 +102,7 @@ function validateUserPatch(req) {
     return schema.validate(req);
 }
 
-function validateUserGet(req) {
+function validateUserId(req) {
     const schema = Joi.object({
         params: Joi.object({
             id: Joi.number().required()

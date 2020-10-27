@@ -67,6 +67,8 @@ where key is a key for the translation found in one of the translation JSON file
 - The routes that require authentication need to use the auth middleware in middelware/auth.js.
 - To be able to access endpoints that require authentication the client is required to send a valid jsonwebtoken with the request. The token should be send in an http header called x-auth-token. 
 - The token is verified by jsonwebtoken npm package by giving it the token received in the header and a secret jwtPrivateKey that is stored in an environment variable.
+- The information provided in the token is further validated against the database with util/user_validator.js
+  - This is not exactly the way JWTs are usually used because database queries can slow systems down. The upside is that a deleted user won't be able to use his valid JWT anymore.
 - If no token is sent the system responses with 401. If the token is invalid the system responses with 400.
 - Authorization is handled by two roles and middlewares respectively: admin and superadmin.
   - The admin and superadmin middlewares mentioned above should always and only be used after calling the auth middleware first. This is because admin and superadmin middlewares only read admin and/or superadmin information from the request. If the request is not authenticated first clients can set those properties to any values.
