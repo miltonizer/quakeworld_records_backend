@@ -57,6 +57,43 @@ class UserRepository {
     }
 
     /**
+     * Fetches users from the database
+     * @param username 
+     * @param limit 
+     * @param offset
+     * @returns {Promise<[{User}]>}
+     * In successful returns the body will contain a list of valid 
+     * user objects (can be empty).
+     *
+     * This function won't try to handle errors but throws them
+     * instead.
+     */
+    async fetchUsers(username, limit, offset) {
+        let sqlParameters = [];
+        let sql = `SELECT id, username, email, password, 
+                            admin, superadmin, banned
+                     FROM public.user `;
+        if(username) {
+            const usernameParameter = `%${username}%`;
+            sqlParameters.push(usernameParameter);      
+            sql += `WHERE username LIKE $${sqlParameters.length} `;        
+        }
+
+        if(limit) {
+            sqlParameters.push(limit);   
+            sql += `LIMIT $${sqlParameters.length} `
+        }
+
+        if(offset) {
+            sqlParameters.push(offset);   
+            sql += `OFFSET $${sqlParameters.length} `
+        }
+        
+        const result = await db.query(sql, sqlParameters);
+        return result.rows;
+    }
+
+    /**
      * Fetches a user from the database
      * @param id The id of the user
      * @returns {Promise<{User}|null>}
@@ -100,6 +137,30 @@ class UserRepository {
             );
         }
         return null;
+    }
+
+    /**
+     * Checks if a user is a superadmin or not
+     * @param id The id of the user
+     * @returns <true|false>
+     * This function won't try to handle errors but throws them
+     * instead.
+     */
+    async isSuperAdmin(userId) {
+        const sql = `SELECT superadmin
+                     FROM public.user 
+                     WHERE id = $1`;
+        const sqlParameters = [userId];
+        const result = await db.query(sql, sqlParameters);
+
+        if (result.rows.length == 1) {
+            return result.rows[0].superadmin;
+        }
+        else {
+            throw new UserError("User does not exist.", 
+                                StatusCodes.BAD_REQUEST, 
+                                "error_user_does_not_exist");
+        }
     }
 
     /**

@@ -54,11 +54,61 @@ class UserService {
 
     /**
      * Update a user
+     * @param  {userId} userId id of the user to be updated
      * @param  {requestBody} requestBody The validated body of the 
      * update user request
+     * @param  {requestUser} requestUser The user that made the 
+     * request. Contains id, admin and superadmin properties.
      * @returns {Promise<{user: User}>}
      */
-    async updateUser(userId, requestBody) {
+    async updateUser(userId, requestBody, requestUser) {
+        // User's username or email cannot be set to values that
+        // have been already taken (by other users).
+        if(requestBody.email) {
+            let userRequest = {
+                username: requestBody.email,
+                email: requestBody.email,
+            }
+            const user = await userRepository.fetchUser(userRequest);
+            if(user && user.id !== requestUser.id) {
+                throw new UserError("User exists already.", 
+                                    StatusCodes.BAD_REQUEST, 
+                                    "error_user_exists");
+            }
+        }
+
+        if(requestBody.username) {
+            let userRequest = {
+                username: requestBody.username,
+                email: requestBody.username,
+            }
+            const user = await userRepository.fetchUser(userRequest);
+            if(user && user.id !== requestUser.id) {
+                throw new UserError("User exists already.", 
+                                    StatusCodes.BAD_REQUEST, 
+                                    "error_user_exists");
+            }
+        }
+
+        // User can't ban or unban himself
+        if(userId === requestUser.id) {
+            requestBody.banned = undefined; 
+        }
+        
+        // Only superadmin can change admin / superadmin status
+        if(!requestUser.superadmin) {
+            requestBody.superadmin = undefined;
+            requestBody.admin = undefined;
+        }
+
+        // Only superadmin can change his own data
+        if(await userRepository.isSuperAdmin(userId) &&
+                requestUser.id !== userId) {
+            throw new UserError("Can't modify superadmin's data.", 
+                                StatusCodes.FORBIDDEN, 
+                                "error_cant_modify_superadmins");
+        }
+
         // hash the password if it's been provided
         if(requestBody.password) {
             requestBody.password = await hashPassword(requestBody.password);
@@ -95,6 +145,25 @@ class UserService {
 
         // Generating token to be returned
         return user.generateAuthToken();
+    }
+
+    /**
+     * Fetch users 
+     * @param queryParams an object containing query parameters
+     * Allowed parameters are: page, page_size and username
+     * @returns {Promise<[{User}]>}
+     * In successful returns the body will contain a list of valid 
+     * user objects (can be empty).
+     */
+    async fetchUsers(queryParams) {
+        const username = queryParams.username;
+        const limit = queryParams.page_size;
+        let offset;
+        if(limit) {
+            offset = (queryParams.page - 1) * limit;
+        }
+        const users = await userRepository.fetchUsers(username, limit, offset);
+        return users;
     }
 
     /**
