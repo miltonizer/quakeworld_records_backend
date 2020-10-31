@@ -125,6 +125,32 @@ describe('/api/users', () => {
     //-------------------------------------------------------------------------
     //-------------------------------------------------------------------------
 
+    describe('PATCH /me', () => {
+        const exec = async () => {
+            return await request(server)
+                .patch(`/api/users/me`)
+                .set('x-auth-token', superAdminToken)
+                .send();
+        }
+
+        // Should return
+    });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
+    describe('GET /', () => {
+        const exec = async () => {
+            return await request(server)
+                .get(`/api/users`)
+                .set('x-auth-token', superAdminToken)
+                .send();
+        }
+    });
+
+    //-------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
+
     describe('DELETE /:id', () => {
         const exec = async () => {
             return await request(server)

@@ -23,6 +23,17 @@ router.delete('/me', auth, async (req, res) => {
 });
 
 /**
+ * Updates user's own information in the database
+ * @param requestBody
+ * @returns {Promise<{User}|null>}
+ * Request body must contain at least one valid property
+ * of the User model.
+ */
+router.patch('/me', auth, async (req, res) => {
+
+});
+
+/**
  * Fetches a user from the database
  * @param id The id of the user
  * @returns {Promise<{User}|null>}
@@ -64,8 +75,9 @@ router.post('/', validate(validateUser), async (req, res) => {
 /**
  * Updates a user in the database
  * @param id The id of the user
+ * @param requestBody user's updated information
  * @returns {Promise<{User}|null>}
- * Request body must contain at least one valid property
+ * Requestbody must contain at least one valid property
  * of the User model. User with the given id must be exist
  * in the database.
  */
@@ -93,7 +105,8 @@ function validateUserPatch(req) {
             email: Joi.string().email(),
             password: Joi.string().min(Constants.PASSWORD_MIN_LENGTH),
             admin: Joi.boolean(),
-            superadmin: Joi.boolean()
+            superadmin: Joi.boolean(),
+            banned: Joi.boolean()
         }),
         params: Joi.object({
             id: Joi.number().required()

@@ -25,7 +25,8 @@ class UserRepository {
     async fetchUser(user) {
         logger.silly("repositories.UserRepository.fetchUser called");
         const { username, email } = user;
-        const sql = `SELECT id, username, email, password, admin, superadmin 
+        const sql = `SELECT id, username, email, password, 
+                            admin, superadmin, banned
                      FROM public.user 
                      WHERE email = $1 OR username = $2`;
         const sqlParameters = [email, username];
@@ -38,7 +39,8 @@ class UserRepository {
                 result.rows[0].password,
                 result.rows[0].admin,
                 result.rows[0].superadmin,
-                result.rows[0].id
+                result.rows[0].id,
+                result.rows[0].banned
             );
             return user;
         }
@@ -69,7 +71,8 @@ class UserRepository {
      */
     async fetchById(userId) {
         logger.silly("repositories.UserRepository.fetchById called");
-        const sql = `SELECT id, username, email, password, admin, superadmin 
+        const sql = `SELECT id, username, email, password, 
+                            admin, superadmin, banned
                      FROM public.user 
                      WHERE id = $1`;
         const sqlParameters = [userId];
@@ -82,7 +85,8 @@ class UserRepository {
                 result.rows[0].password,
                 result.rows[0].admin,
                 result.rows[0].superadmin,
-                result.rows[0].id
+                result.rows[0].id,
+                result.rows[0].banned
             );
             return user;
         }
@@ -183,10 +187,16 @@ class UserRepository {
             sqlParameters.push(requestBody.superadmin);       
             sql += `superadmin = $${sqlParameters.length} `;  
         }
+        if(requestBody.banned) {
+            if(somethingAlreadySet) sql += `,`;
+            somethingAlreadySet = true;
+            sqlParameters.push(requestBody.banned);       
+            sql += `banned = $${sqlParameters.length} `; 
+        }
 
         sqlParameters.push(userId);
         sql += `WHERE id = $${sqlParameters.length}
-                RETURNING id, username, email, admin, superadmin`;
+                RETURNING id, username, email, admin, superadmin, banned`;
         const client = await db.pool.connect();
 
         try {
@@ -218,7 +228,8 @@ class UserRepository {
                 '',
                 result.rows[0].admin,
                 result.rows[0].superadmin,
-                result.rows[0].id
+                result.rows[0].id,
+                result.rows[0].banned
             );
             return user;
         } 
