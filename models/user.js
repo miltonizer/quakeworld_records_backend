@@ -9,13 +9,15 @@ class User {
             password, 
             admin = false, 
             superadmin = false, 
-            id) {
+            id,
+            banned = false) {
         this.username = username;
         this.email = email;
         this.password = password;
         this.admin = admin;
         this.superadmin = superadmin;
         this.id = id;
+        this.banned = banned;
     }
 
     // Generating token to be returned to the client

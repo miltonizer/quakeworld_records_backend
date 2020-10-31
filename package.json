@@ -39,6 +39,7 @@
     "i18next-http-middleware": "^3.0.6",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
+    "max-listeners-exceeded-warning": "0.0.1",
     "morgan": "^1.10.0",
     "pg": "^8.4.1",
     "winston": "^3.3.3"

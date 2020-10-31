@@ -23,6 +23,18 @@ router.delete('/me', auth, async (req, res) => {
 });
 
 /**
+ * Updates user's own information in the database
+ * @param requestBody
+ * @returns {Promise<{User}|null>}
+ * Request body must contain at least one valid property
+ * of the User model.
+ */
+router.patch('/me', [auth, validate(validateUserPatch)], async (req, res) => {
+    const user = await userService.updateUser(req.user.id, req.body, req.user);
+    res.send(user);
+});
+
+/**
  * Fetches a user from the database
  * @param id The id of the user
  * @returns {Promise<{User}|null>}
@@ -31,6 +43,18 @@ router.delete('/me', auth, async (req, res) => {
 router.get('/:id', [auth, admin, validate(validateUserId)], async (req, res) => {
     const user = await userService.fetchById(req.params.id);
     res.send(user);
+});
+
+/**
+ * Fetches users from the database
+ * @queryparam page
+ * @queryparam page_size
+ * @queryparam username
+ * @returns {Promise<[{User}]|null>}
+ */
+router.get('/', [auth, admin, validate(validateUserGet)], async (req, res) => {
+    const users = await userService.fetchUsers(req.query);
+    res.send(users);
 });
 
 /**
@@ -48,7 +72,7 @@ router.delete('/:id', [auth, superadmin, validate(validateUserId)], async (req, 
 // Don't store tokens in database in general and if for some reason you do,
 // don't store them in plain text but hash them first!
 // Logging out should be handled by clients.
-router.post('/', validate(validateUser), async (req, res) => {
+router.post('/', validate(validateUserPost), async (req, res) => {
     logger.silly("routes.users.root called");
     const { token, user } = await userService.createUser(req.body);
     logger.silly("routes.users.root about the send response");
@@ -64,18 +88,21 @@ router.post('/', validate(validateUser), async (req, res) => {
 /**
  * Updates a user in the database
  * @param id The id of the user
+ * @param requestBody user's updated information
  * @returns {Promise<{User}|null>}
- * Request body must contain at least one valid property
+ * Requestbody must contain at least one valid property
  * of the User model. User with the given id must be exist
  * in the database.
  */
-router.patch('/:id', [auth, superadmin, validate(validateUserPatch)], async (req, res) => {
-    const { user } = await userService.updateUser(req.params.id, req.body);
-    res.send();
+router.patch('/:id', 
+        [auth, admin, validate(validateUserPatch), validate(validateUserId)], 
+        async (req, res) => {
+    const user = await userService.updateUser(req.params.id, req.body, req.user);
+    res.send(user);
 });
 
 // TODO: can these validate-funtions be combined?
-function validateUser(req) {
+function validateUserPost(req) {
     const schema = Joi.object({
         body: Joi.object({
             username: Joi.string().min(Constants.USERNAME_MIN_LENGTH).required(),
@@ -93,10 +120,8 @@ function validateUserPatch(req) {
             email: Joi.string().email(),
             password: Joi.string().min(Constants.PASSWORD_MIN_LENGTH),
             admin: Joi.boolean(),
-            superadmin: Joi.boolean()
-        }),
-        params: Joi.object({
-            id: Joi.number().required()
+            superadmin: Joi.boolean(),
+            banned: Joi.boolean()
         })
     }).unknown(true);
     return schema.validate(req);
@@ -106,6 +131,17 @@ function validateUserId(req) {
     const schema = Joi.object({
         params: Joi.object({
             id: Joi.number().required()
+        })
+    }).unknown(true);
+    return schema.validate(req);
+}
+
+function validateUserGet(req) {
+    const schema = Joi.object({
+        query: Joi.object({
+            page: Joi.number(),
+            page_size: Joi.number(),
+            username: Joi.string(),
         })
     }).unknown(true);
     return schema.validate(req);

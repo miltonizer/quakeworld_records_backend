@@ -12,5 +12,6 @@
     "error_too_many_rows_inserted": "Something failed terribly.",
     "error_too_many_rows_updated": "Something failed terribly.",
     "error_too_many_rows_deleted": "Something failed terribly.",
-    "error_modified_user": "Something failed terribly."
+    "error_modified_user": "Something failed terribly.",
+    "error_cant_modify_superadmins": "Superadmins are untouchable!"
 }

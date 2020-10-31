@@ -28,7 +28,7 @@ In production environment quakeworld_records_backend_jwtPrivateKey -environment 
 `npm install -g db-migrate`
 Db-migrate installation might have to be added in the backend Dockerfile as well.
 - Use the following command in the project root folder to update the database to the latest version:
-`npm run-script db-migrate-up-<environment>`
+`npm run-script db-migrate-<environment>-up`
 This will set NODE_ENV environment variable temporarily and load the corresponding database configuration (development, test, production). If connection settings for any of these environments change, the change must be done in the configuration files of config as well as in the db-migrate configuration file (database.json in the root folder of the project).
 - Create a migration that uses sql files:
 `npm run db-migrate-create <name_of_the_migration>`
