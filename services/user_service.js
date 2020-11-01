@@ -62,32 +62,18 @@ class UserService {
      * @returns {Promise<{user: User}>}
      */
     async updateUser(userId, requestBody, requestUser) {
+        // userId should always be integer
+        userId = parseInt(userId);
+
         // User's username or email cannot be set to values that
         // have been already taken (by other users).
         if(requestBody.email) {
-            let userRequest = {
-                username: requestBody.email,
-                email: requestBody.email,
-            }
-            const user = await userRepository.fetchUser(userRequest);
-            if(user && user.id !== requestUser.id) {
-                throw new UserError("User exists already.", 
-                                    StatusCodes.BAD_REQUEST, 
-                                    "error_user_exists");
-            }
+            await this.checkForExistingOtherUser(userId, requestBody.email);
         }
 
+        // The same checks must be done for username as well
         if(requestBody.username) {
-            let userRequest = {
-                username: requestBody.username,
-                email: requestBody.username,
-            }
-            const user = await userRepository.fetchUser(userRequest);
-            if(user && user.id !== requestUser.id) {
-                throw new UserError("User exists already.", 
-                                    StatusCodes.BAD_REQUEST, 
-                                    "error_user_exists");
-            }
+            await this.checkForExistingOtherUser(userId, requestBody.username);
         }
 
         // User can't ban or unban himself
@@ -162,7 +148,12 @@ class UserService {
         if(limit) {
             offset = (queryParams.page - 1) * limit;
         }
-        const users = await userRepository.fetchUsers(username, limit, offset);
+        let users = await userRepository.fetchUsers(username, limit, offset);
+
+        // For is much faster than foreach
+        for(let i = 0; i < users.length; i++) {
+            users[i].password = '';
+        }
         return users;
     }
 
@@ -198,6 +189,22 @@ class UserService {
 
         logger.silly(`services.UserService.deleteById done`);
         return;
+    }
+
+    async checkForExistingOtherUser(userId, emailOrUsername) {
+        // Checking both username and email columns because it's not 
+        // desirable to have a situation where username of one user
+        // is the email of another.
+        const userInDatabaseRequest = {
+            username: emailOrUsername,
+            email: emailOrUsername,
+        }
+        const userInDatabase = await userRepository.fetchUser(userInDatabaseRequest);
+        if(userInDatabase && userInDatabase.id !== userId) {
+            throw new UserError("User exists already.", 
+                                StatusCodes.BAD_REQUEST, 
+                                "error_user_exists");
+        }
     }
 }
 module.exports = UserService;

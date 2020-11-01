@@ -5,6 +5,7 @@ const UserRepository = require("../../../repositories/user_repository");
 const userRepository = new UserRepository();
 const User = require( "../../../models/User");
 const {verifyPassword} = require('../../../util/password_encryption');
+const {insertUserToDatabase} = require('../../../util/test/user_utils');
 const maxListenersExceededWarning = require('max-listeners-exceeded-warning');
 
 let server;
@@ -48,35 +49,6 @@ async function testUserRequestBody(requestBody, exec, meAPIRequest) {
         res = await exec();
         expect(res.status).toBe(StatusCodes.BAD_REQUEST);
     }
-}
-
-async function insertUserToDatabase(username, email, password, admin, superadmin) {
-    // Creating a superadmin to get a valid id and token for him
-    let sql = `INSERT INTO public.user (username,
-                        email, 
-                        password, 
-                        admin, 
-                        superadmin) 
-                VALUES ($1, $2, $3, $4, $5)
-                RETURNING id, username, email, admin, superadmin`;
-    let sqlParameters = [
-        username,
-        email,
-        password,
-        admin,
-        superadmin
-    ];
-
-    const res = await db.query(sql, sqlParameters);
-    const user = new User(
-        res.rows[0].username, 
-        res.rows[0].email,
-        res.rows[0].password,
-        res.rows[0].admin,
-        res.rows[0].superadmin,
-        res.rows[0].id
-    );
-    return user;
 }
 
 describe('/api/users', () => {
@@ -512,7 +484,7 @@ describe('/api/users', () => {
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
 
-        it('should return 400 bad request if username/email already exists and its not the username/email of the requester', async () => {
+        it('should return 400 bad request if username/email already exists and its not the username/email of the user being modified', async () => {
             expect.assertions(2);
 
             requestBody.username = "normalUser";
@@ -525,18 +497,19 @@ describe('/api/users', () => {
             expect(res.status).toBe(StatusCodes.BAD_REQUEST);
         });
 
-        it('should return 200 OK if username/email already exists but its the username/email of the requester', async () => {
+        it('should return 200 OK if username/email already exists but the username belongs to the user being modified', async () => {
             expect.assertions(2);
 
-            // Setting the user to be admin instead of superadmin
-            superAdminToken = adminToken;
+            // Let's change the adminId to superAdminId so that the user is
+            // trying to modify his own information
+            adminId = superAdminId;
 
-            requestBody.username = "admin";
+            requestBody.username = "superadmin@test.com";
             let res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
             requestBody.username = "newUsername";
-            requestBody.email = "admin@test.com";
+            requestBody.email = "superadmin@test.com";
             res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
         });
