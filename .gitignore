@@ -1,5 +1,6 @@
 node_modules/
 coverage/
+demos/
 .logfile
 logfile.log
 logs/

@@ -13,3 +13,8 @@
 # development makes it easier to run test suites and development environment
 # at the same time.
 #[Environment]::SetEnvironmentVariable('quakeworld_records_backend_node_port','3000',[EnvironmentVariableTarget]::User)
+
+# The same thing with demo base folder environment variable. Not setting this in 
+# development makes it easier to run test suites and development environment
+# at the same time.
+#[Environment]::SetEnvironmentVariable('quakeworld_records_backend_demo_base_folder','C:\temp\',[EnvironmentVariableTarget]::User)
