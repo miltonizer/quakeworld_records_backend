@@ -3,7 +3,6 @@ const fsPromises = require('fs').promises;
 const path = require('path');
 const multer  = require('multer')
 const config = require('config');
-const del = require('del');
 const { StatusCodes } = require('http-status-codes');
 const ApplicationError = require('../util/errors/application_error');
 const Constants = require('../util/constants');
