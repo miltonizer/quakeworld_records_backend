@@ -6,5 +6,5 @@
     "database_port": "5432",
     "database_name": "quakeworld_records_test",
     "node_port": 3666,
-    "demo_base_folder": "D:\\programming\\quakeworld_records\\quakeworld_records_backend\\demos\\"
+    "demo_base_folder": "D:\\programming\\quakeworld_records\\quakeworld_records_backend\\demos\\test\\"
 }

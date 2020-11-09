@@ -7,8 +7,11 @@ const User = require( "../../../models/User");
 const {verifyPassword} = require('../../../util/password_encryption');
 const {insertUserToDatabase} = require('../../../util/test/user_utils');
 const maxListenersExceededWarning = require('max-listeners-exceeded-warning');
+const { createHttpTerminator} = require('http-terminator');
 
 let server;
+let httpTerminator;
+let supertest;
 let adminId;
 let adminToken;
 let superAdminId;
@@ -55,13 +58,17 @@ describe('/api/users', () => {
     
     beforeAll(async () => {
         server = require('../../../index');
+        httpTerminator = createHttpTerminator({server});
+        supertest = request(server);
 
         const sql = `DELETE FROM public.user`;
         await db.query(sql);
     });
 
     afterAll(async () => {
-        await server.close();
+        await db.pool.end();
+        await httpTerminator.terminate();
+        //await new Promise(resolve => setTimeout(() => resolve(), 10000));
     });
 
     beforeEach(async () => {
@@ -100,7 +107,7 @@ describe('/api/users', () => {
 
     describe('GET /me', () => {
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .get('/api/users/me')
                 .set('x-auth-token', adminToken)
                 .send();                    
@@ -142,7 +149,7 @@ describe('/api/users', () => {
     let requestBody;
     describe('PATCH /me', () => {
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .patch(`/api/users/me`)
                 .set('x-auth-token', superAdminToken)
                 .send(requestBody);
@@ -204,7 +211,7 @@ describe('/api/users', () => {
             const res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
-            const userResponse = await request(server)
+            const userResponse = await supertest
                 .get(`/api/users/${superAdminId}`)
                 .set('x-auth-token', superAdminToken)
                 .send();
@@ -244,7 +251,7 @@ describe('/api/users', () => {
         let pageSize;
         let username;
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .get(`/api/users`)
                 .query({
                     page: pageNumber,
@@ -337,7 +344,7 @@ describe('/api/users', () => {
 
     describe('DELETE /:id', () => {
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .delete(`/api/users/${adminId}`)
                 .set('x-auth-token', superAdminToken)
                 .send();
@@ -387,7 +394,7 @@ describe('/api/users', () => {
             const res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
-            const userResponse = await request(server)
+            const userResponse = await supertest
                 .get(`/api/users/${adminId}`)
                 .set('x-auth-token', superAdminToken)
                 .send();
@@ -400,7 +407,7 @@ describe('/api/users', () => {
 
     describe('DELETE /me', () => {
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .delete(`/api/users/me`)
                 .set('x-auth-token', adminToken)
                 .send();
@@ -419,7 +426,7 @@ describe('/api/users', () => {
             const res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
-            const userResponse = await request(server)
+            const userResponse = await supertest
                 .get(`/api/users/me`)
                 .set('x-auth-token', adminToken)
                 .send();
@@ -433,7 +440,7 @@ describe('/api/users', () => {
     describe('PATCH /:id', () => {
         let requestBody;
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .patch(`/api/users/${adminId}`)
                 .set('x-auth-token', superAdminToken)
                 .send(requestBody);
@@ -532,7 +539,7 @@ describe('/api/users', () => {
             const res = await exec();
             expect(res.status).toBe(StatusCodes.OK);
 
-            const userResponse = await request(server)
+            const userResponse = await supertest
                 .get(`/api/users/${adminId}`)
                 .set('x-auth-token', superAdminToken)
                 .send();
@@ -602,7 +609,7 @@ describe('/api/users', () => {
 
     describe('GET /:id', () => {
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .get(`/api/users/${adminId}`)
                 .set('x-auth-token', superAdminToken)
                 .send();
@@ -665,7 +672,7 @@ describe('/api/users', () => {
         // so that every test can start with the same initial setup.
         let requestBody;
         const exec = async () => {
-            return await request(server)
+            return await supertest
                 .post('/api/users')
                 .send(requestBody);
         }

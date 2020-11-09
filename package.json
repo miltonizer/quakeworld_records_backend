@@ -5,6 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --watchAll --runInBand --detectOpenHandles --coverage --verbose",
+    "test-demos": "cross-env NODE_ENV=test jest tests/integration/routes/demos.test.js --detectOpenHandles --verbose",
+    "test-users": "cross-env NODE_ENV=test jest tests/integration/routes/users.test.js --detectOpenHandles --verbose",
+    "test-test": "cross-env NODE_ENV=test jest tests/integration/routes/test.test.js --detectOpenHandles --verbose",
     "start": "node index.js",
     "start-dev": "cross-env NODE_ENV=development node index.js",
     "db-migrate-create": "cross-env NODE_ENV=development db-migrate create --",
@@ -34,13 +37,15 @@
     "express-async-errors": "^3.1.1",
     "helmet": "^4.1.1",
     "http-status-codes": "^2.1.4",
+    "http-terminator": "^2.0.3",
     "i18next": "^19.8.1",
     "i18next-fs-backend": "^1.0.7",
     "i18next-http-middleware": "^3.0.6",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
-    "max-listeners-exceeded-warning": "0.0.1",
+    "md5-file": "^5.0.0",
     "morgan": "^1.10.0",
+    "move-file": "^2.0.0",
     "multer": "^1.4.2",
     "pg": "^8.4.1",
     "winston": "^3.3.3"
@@ -50,6 +55,8 @@
     "eslint": "^7.10.0",
     "jest": "^26.4.2",
     "joi": "^17.2.1",
-    "supertest": "^5.0.0"
+    "supertest": "^5.0.0",
+    "max-listeners-exceeded-warning": "0.0.1",
+    "leaked-handles": "^5.2.0"
   }
 }

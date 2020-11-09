@@ -13,5 +13,8 @@
     "error_too_many_rows_updated": "Something failed terribly.",
     "error_too_many_rows_deleted": "Something failed terribly.",
     "error_modified_user": "Something failed terribly.",
-    "error_cant_modify_superadmins": "Superadmins are untouchable!"
+    "error_cant_modify_superadmins": "Superadmins are untouchable!",
+    "error_file_format_not_accepted": "The provided file format is not accepted.",
+    "error_file_too_large": "The uploaded file(s) was too large.",
+    "error_file_uploading_failed": "File uploading failed for an unknown reason."
 }

@@ -4,6 +4,7 @@
 module.exports = Object.freeze({
     PASSWORD_MIN_LENGTH: 8,
     USERNAME_MIN_LENGTH: 1,
-    MAX_DEMO_FILE_SIZE: 20000000 // in bytes
+    MAX_DEMO_FILE_SIZE: 20000000, // in bytes
+    MULTER_FILE_TOO_LARGE_ERROR_MESSAGE: "File too large"
 });
 
