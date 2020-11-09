@@ -3,7 +3,7 @@ const db = require('../database/');
 const logger = require('../util/logger');
 const DatabaseError = require('../util/errors/database_error');
 const UserError = require('../util/errors/user_error');
-const User = require( "../models/User");
+const User = require( "../models/user");
 
 class UserRepository {
     constructor() {}

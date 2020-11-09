@@ -19,5 +19,3 @@ export NODE_ENV=development
 # development makes it easier to run test suites and development environment
 # at the same time.
 #export quakeworld_records_backend_demo_base_folder=/tmp/
-
-quakeworld_records_backend_demo_base_folder

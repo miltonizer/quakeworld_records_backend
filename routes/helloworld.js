@@ -7,7 +7,7 @@ const db = require('../database/');
 const Joi = require('joi');
 const UserService = require( "../services/user_service" );
 const userService = new UserService();
-const User = require( "../models/User");
+const User = require( "../models/user");
 
 router.get('/', async (req, res) => {
     res.send(`${req.t('key')}`);

@@ -1,5 +1,5 @@
 const db = require('../../database/');
-const User = require( "../../models/User");
+const User = require( "../../models/user");
 
 async function insertUserToDatabase(username, email, password, admin, superadmin) {
     // Creating a superadmin to get a valid id and token for him

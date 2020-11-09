@@ -1,5 +1,6 @@
 const md5File = require('md5-file')
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const moveFile = require('move-file');
 const path = require('path');
 const config = require('config');
@@ -24,7 +25,10 @@ class DemoService {
         let uploadedMD5s = new Array();
         if(demos && userId) {
             // Check if demos have been uploaded already and remove the already
-            // existing demos from both the database and disk
+            // existing demos from both the array and disk. Notice that the
+            // temporary demo folder should never be removed because there might
+            // be multiple uploads coming from multiple (and even the same) user
+            // at the "same time".
             for(let i = 0; i < demos.length; i++) {
                 demos[i].md5sum
                 demos[i].md5sum = await md5File(demos[i].path);
@@ -57,7 +61,6 @@ class DemoService {
             }
 
             // Save only new demos to database
-            // TODO: demos can be empty here!!!
             if(demos.length > 0) {
                 const addedFilesDatabaseResult = await demoRepository.uploadDemos(demos, userId);
                 if(addedFilesDatabaseResult) {

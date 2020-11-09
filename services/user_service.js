@@ -6,7 +6,7 @@ const userRepository = new UserRepository();
 const logger = require('../util/logger');
 const UserError = require('../util/errors/user_error');
 const {hashPassword, verifyPassword} = require('../util/password_encryption');
-const User = require( "../models/User");
+const User = require( "../models/user");
 
 class UserService {
     constructor() {}
